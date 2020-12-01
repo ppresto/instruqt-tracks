@@ -31,13 +31,17 @@ challenges:
   title: "\U0001F3E1 Set Up Your Vault"
   teaser: |
     Configure your code editor for Terraform and open a workspace.
-  assignment: "Lets get started building our GKE cluster using OSS Terraform. Jump
-    to the `Shell` Tab.  We'll use the gcp-gke repo that has already been cloned for
-    you.\n\n## Create the K8s Cluster with terraform\nMake sure you're in the `us-west-primary`
-    directory. Use vi or the Code Editor Tab to edit **terraform.tfvars** and customize
-    your environment.  Then run terraform.\n```\nterraform init\nterraform apply -auto-approve\n```\nYou
-    should see green output with your GKE cluster information. If you see errors investigate.\n\nWhile
-    your GKE cluster is being created lets sit down at your workstation and open your
+  assignment: "Lets get started building our GKE cluster using OSS Terraform. \nWe'll
+    use the **gcp-gke** repo that has already been cloned for you.\n\n## Create the
+    K8s Cluster with terraform\nMake sure you're in the `us-west-primary` Tab and
+    in /root/gcp-gke/us-west-primary. Use vi or the Code Editor Tab to edit **terraform.tfvars**
+    and customize your environment.  Then run terraform.\n```\nterraform init\nterraform
+    apply -auto-approve\n```\nYou should see green output with your GKE cluster information.
+    Take a look at the ./main.tf file to see what is being created.  Terraform is
+    creating our VPC and GKE cluster along with the KMS keys we will use to auto-unseal
+    vault.  Look at ../templates/override-values-autounseal.yaml to see how vault.yamlis
+    created.  The helm install uses this file to override defaults.\n\n## Take a tour
+    of Visual Studio Code\nWhile your GKE cluster is being created lets open your
     text editor, Visual Studio Code.  Open the Code Editor tab on the left. First
     get familiar with the menus. This is running the Visual Studio Code editor.  If
     you do use VS Code, please perform the following steps\n\nNotice the menu bar
@@ -58,22 +62,26 @@ challenges:
     of the Visual Code Editor by using the Terminal > New Terminal menu or the **<ctrl>-`**
     shortcut.  On Mac its **<cmd> J**.  If you do use the VS Code terminal, you can
     toggle its size up and down with the `^` and inverted `^` buttons above it. You
-    can get rid of it with the garbage can and `x` icons.\n\nAuthenticate and Connect
-    to your new Cluster.  \n```\n./setkubectl.sh\n```\n\nWith our newly provisioned
-    GKE cluster we can now install Vault using helm.\n```\nhelm repo add hashicorp
-    https://helm.releases.hashicorp.com\nhelm install vault-primary hashicorp/vault
-    -f vault.yaml\n```\n\nWhile the helm chart is installing Vault lets setup an external
-    LB we can use for cross GKE cluster replication.  This will give us an external
-    ip that will only route traffic to our active node on ports 8200, 8201, 8202.
-    \ We have defined selectors like `vault-active: \"true\"` to only target the active
-    vault node to make replication work. \n```\nkubectl apply -f vault-primary-active-lb.yaml\nkubectl
-    get svc vault-primary-active-lb\n```\nIf the external ip is 'pending' just wait
-    and look it up again later.\n\nAt this point vault should be installed. Verify
-    the vault pods are Running and get status\n```\nkubectl get pods\nkubectl exec
-    vault-primary-0 -- vault status\n```\n\nInitialize Vault, join the other raft
-    members, and apply a license by creating /tmp/vault-ent.hclic or use the temporary
-    one.\n```\n../scripts/init_vault.sh\n```\n\nIf the external IP is pending, wait
-    a minute and try again.  Copy this imports."
+    can get rid of it with the garbage can and `x` icons.\n\n## Time to Install Vault
+    on GKE\nAuthenticate and Connect to your new Cluster.  \n```\n./setkubectl.sh\n```\n
+    This script will authenticate us to GKE, and create a kms-creds k8s secret with
+    our GOOGLE_CREDENTIALS if it doesn't exist.  This is how we support GCP Auto-Unseal.\n\nWith
+    our newly provisioned GKE cluster we can now install Vault using helm.  We are
+    overriding the standard helm chart with vaules in ./vault.yaml.  This includes
+    things like the kms-creds secret needed for auto-unseal.  Use VSCode to take a
+    closer look at our customizations.\n```\nhelm repo add hashicorp https://helm.releases.hashicorp.com\nhelm
+    install vault-primary hashicorp/vault -f vault.yaml\n```\n\nWhile the helm chart
+    is installing Vault lets setup an external LB we can use for cross GKE cluster
+    replication.  This will give us an external ip that will only route traffic to
+    our active node on ports 8200, 8201, 8202.  We have defined selectors like `vault-active:
+    \"true\"` to only target the active vault node to make replication work. \n```\nkubectl
+    apply -f vault-primary-active-lb.yaml\nkubectl get svc vault-primary-active-lb\n```\nIf
+    the external ip is 'pending' just wait and look it up again in a minute.\n\nAt
+    this point vault should be installed. Verify the vault pods are READY and get
+    status\n```\nkubectl get pods\nkubectl exec vault-primary-0 -- vault status\n```\n\nInitialize
+    Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic
+    or use the temporary one.\n```\n../scripts/init_vault.sh\n```\n\n.  You should
+    now be running a 3 node Vault Enterprise Cluster in GKE"
   notes:
   - type: text
     contents: "Welcome to your first day on the job at ACME Inc. These are some of
@@ -145,7 +153,7 @@ challenges:
     kubectl exec vault-dr-0 -- vault status
     ```
 
-    Initialize Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic or use the temporary one.
+    Initialize Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic or use the temporary one.  **Run this script from within the us-centeral-dr directory as shown below.**
     ```
     ../scripts/init_vault.sh
     ```
@@ -154,23 +162,33 @@ challenges:
     ```
     cat tmp/cluster-keys.json  # sensitive information from init is stored here temporarily.
     kubectl exec -ti vault-dr-0 -- vault login
-    kubectl exec -ti vault-secondary-0 -- vault operator raft list-peers
+    kubectl exec -ti vault-dr-0 -- vault operator raft list-peers
     ```
 
-    We should be ready to setup Vault DR replication now.  First we need to jump back over to our primary GKE Cluster.  Lets jump into the us-west-primary directory and change our context.
+    ## Setup Vault DR replication
+    Lets jump back over to our primary GKE Cluster. Go to the `us-west-primary Tab`, change directory and load the primary GKE context.
     ```
     cd ../us-west-primary
     ./setkubectl.sh
     ```
 
-    Enable Replication on the primary
+    ### Get External service IP
+    To enable Replication on the primary we need the External Service IP to route across GKE clusters.
     ```
-    kubectl exec -ti vault-primary-0 -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://vault-primary-active:8201
+    ext_ip=$(kubectl get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+    echo "Ext IP: ${ext_ip}"
     ```
+    We should see the External IP of the vault-primary-active-lb service.  We are enabling replication on the primary and overriding the local cluster_address with this external endpoint so our DR cluster can establish a connection.
 
-    Create a token for the secondary to configure replication with the primary`.
+    ### Enable Replication on the Primary
     ```
-    kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=secondary
+    kubectl exec -ti vault-primary-0 -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
+    ```
+    The cluster_address is used for server to server communication.  Whether using TLS or not vault will always encrypt this traffic.  So this URL should always be https.
+
+    ### Create a token for the DR cluster to use
+    ```
+    kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=dr
     ```
 
     The primary is now setup.  Lets jump back over to the dr cluster and configure replication.
@@ -179,17 +197,28 @@ challenges:
     ./setkubectl.sh
     ```
 
-    Enable Replication with the primary
+    ### Get the Vault primary external service IP
     ```
-    kubectl exec -ti vault-secondary-0 -- vault write sys/replication/dr/secondary/enable token=<TOKEN FROM PRIMARY>
+    ext_ip=$(kubectl --context=primary get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+    echo "Ext IP: ${ext_ip}"
+    ```
+    We should see the External IP of the vault-primary-active-lb service.  To enable replication on the primary we will need a route to the primary clusters API.  The vault-primary-active-lb service gives us this.
+
+    ### Enable Replication with the primary
+    ```
+    kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=<TOKEN FROM PRIMARY>
     ```
 
-    Once this is successfully connected we can check the status on both primary and dr clusters.
+    ### Check the DR cluster replication status
     ```
-    kubectl exec -ti vault-secondary-0 -- vault read sys/replication/dr/status
-    kubectl -context=primary exec -it vault-primary-0 -- vault read sys/replication/dr/status
+    kubectl exec -ti vault-dr-0 -- vault read sys/replication/dr/status
     ```
-    Note:  To quickly get the primary cluster status we are using -context in the CLI.
+
+    ### Check Primary cluster replication status
+    ```
+    kubectl --context=primary exec -it vault-primary-0 -- vault read sys/replication/dr/status
+    ```
+    Note:  To quickly get the primary cluster status we are using `--context=primary` in the CLI.
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
@@ -1004,4 +1033,4 @@ challenges:
     hostname: workstation
   difficulty: basic
   timelimit: 1800
-checksum: "14138069425668832522"
+checksum: "16051258294104321625"
