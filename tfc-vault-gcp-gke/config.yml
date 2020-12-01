@@ -16,3 +16,4 @@ gcp_projects:
   - cloudresourcemanager.googleapis.com
   - compute.googleapis.com
   - container.googleapis.com
+  - cloudkms.googleapis.com

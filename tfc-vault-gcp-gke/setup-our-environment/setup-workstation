@@ -1,27 +1,30 @@
 #!/bin/bash -l
-set -e
+# set -e
 
 # Allow instruqt time to do its thing
 sleep 10
 
 # install command line tools
 snap install kubectl --classic
+snap install helm --classic
 
 # clone the terraform-guides repo
 git clone https://github.com/ppresto/gcp-gke.git
 GITDIR="/root/gcp-gke"
 
 # Set workdir
-set-workdir ${GITDIR}
+set-workdir ${GITDIR}/us-west-primary
+
 
 # Store our project ID as a Terraform env var
-export GCP_PROJECT=$INSTRUQT_GCP_PROJECT_GCP_PROJECT_PROJECT_ID
-export TF_VAR_gcp_project=$INSTRUQT_GCP_PROJECT_GCP_PROJECT_PROJECT_ID
 grep $INSTRUQT_GCP_PROJECT_GCP_PROJECT_PROJECT_ID /root/.bashrc || echo "export TF_VAR_gcp_project=\"$INSTRUQT_GCP_PROJECT_GCP_PROJECT_PROJECT_ID\"" >> /root/.bashrc
+echo "export GOOGLE_PROJECT=\"$INSTRUQT_GCP_PROJECT_GCP_PROJECT_PROJECT_ID\"" >> /root/.bashrc
+
+# Add GCP Credentials to our profile and env
 export GOOGLE_CREDENTIALS=$(echo $INSTRUQT_GCP_PROJECT_GCP_PROJECT_SERVICE_ACCOUNT_KEY | base64 -d | jq 'tostring')
 export TF_VAR_GOOGLE_CREDENTIALS="${GOOGLE_CREDENTIALS}"
 echo "export GOOGLE_CREDENTIALS=$GOOGLE_CREDENTIALS" >> /root/.bashrc
-echo "export TF_VAR_GOOGLE_CREDENTIALS=$GOOGLE_CREDENTIALS" >> /root/.bashrc
+#echo "export TF_VAR_GOOGLE_CREDENTIALS=$GOOGLE_CREDENTIALS" >> /root/.bashrc
 
 # Create VSC startup script
 cat <<-EOF > /etc/systemd/system/code-server.service
@@ -49,21 +52,6 @@ systemctl import-environment GOOGLE_CREDENTIALS
 # Start VSC
 systemctl enable code-server
 systemctl start code-server
-
-# Configure kubectl with GCP credentials
-cat <<-EOF > /root/cfgkubectl.sh
-#!/bin/bash
-echo \${GOOGLE_CREDENTIALS} >> /root/credential_key.json
-gcp_region=$(terraform output -state=${GITDIR}/terraform.tfstate region)
-gcp_cluster_name=$(terraform output -state=${GITDIR}/terraform.tfstate kubernetes_cluster_name)
-
-gcloud auth activate-service-account --key-file=/root/credential_key.json
-gcloud config set project ${INSTRUQT_GCP_PROJECT_GCP_PROJECT_PROJECT_ID}
-gcloud config set compute/region ${gcp_region}
-gcloud container clusters get-credentials ${gcp_cluster_name} --region ${gcp_region}
-rm /root/credential_key.json
-EOF
-chmod 755 /root/cfgkubectl.sh
 
 # Create a catch-up script that enables the user to fast-forward
 cat <<-EOF > /usr/bin/fastforward

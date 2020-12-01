@@ -9,14 +9,9 @@ description: |-
 
   * Terraform Open Source
   * Terraform Cloud
-  * Remote State
-  * Secure Variable Storage
-  * Version Control Integration
-  * Role-based Access Controls
-  * Sentinel Security Policies
-  * Collaboration on Changes
-  * Private Module Registry
-  * API Driven Workflows
+  * Hashicorp Vault
+  * Vault with Integrated Storage (Raft)
+  * Vault DR across GCP Regions
 icon: https://storage.googleapis.com/instruqt-hashicorp-tracks/logo/terraform.png
 tags:
 - terraform
@@ -33,37 +28,62 @@ challenges:
 - slug: setup-our-environment
   id: brexo1gu3wxn
   type: challenge
-  title: "\U0001F3E1 Moving in - Set Up Your Workspace"
+  title: "\U0001F3E1 Set Up Your Vault"
   teaser: |
     Configure your code editor for Terraform and open a workspace.
   assignment: |-
-    Welcome to your first day as an intern at ACME Inc. [ACME](https://www.youtube.com/watch?v=9m7evoFF83c) is a multi-national conglomerate that sells anvils, rocket powered roller skates, portable holes, earthquake pills and birdseed.
+    Lets get started building our GKE cluster using OSS Terraform. Jump to the `Shell` Tab.  We'll use the gcp-gke repo that has already been cloned for you.
 
-    After employee orientation you sit down at your workstation and open your text editor, Visual Studio Code.
+    ## Create the K8s Cluster with terraform
+    ```
+    cd us-west-primary
+    ```
+    Use vi or the Code Editor Tab to edit **terraform.tfvars** and customize your environment.  Then run terraform below.
 
-    Open the Code Editor tab on the left. First get familiar with the menus. This is running the Visual Studio Code editor. You can also use the simpler "Text Editor" tab if you prefer.
+    ```
+    terraform init
+    terraform apply -auto-approve
+    ```
+    You should see green output with your GKE cluster information. If you see errors investigate.
 
-    If you do use the VS Code Editor, please perform the following steps:
+    While your GKE cluster is being created lets sit down at your workstation and open your text editor, Visual Studio Code.  Open the Code Editor tab on the left. First get familiar with the menus. This is running the Visual Studio Code editor.  If you do use VS Code, please perform the following steps
 
     Notice the menu bar with File, Edit, and other menus at the top of the VS Code Editor. You can find all the menus on this menu bar.
 
-    You should see some files in the explorer bar on the left side menu. These are terraform config files for the hashicat application. Open file called "main.tf.
+    You should see some files in the explorer bar on the left side menu. These are terraform config files to build our Kubernetes Cluster.\n\nNext you should install the Terraform extension to enable syntax highlighting in your code. Click on the extensions icon - it looks like four small boxes with one slightly out of position.
 
-    Next you should install the Terraform extension to enable syntax highlighting in your code. Click on the extensions icon - it looks like four small boxes with one slightly out of position.
+    Search for `HashiCorp` and select the **"HashiCorp Terraform 2.x.y"** extension. Click the green **Install** button to install the extension. Then click the **Reload Required** button to activate it. Then click the icon with two pages under the File menu so you can see your Terraform file list.
 
-    Search for **HashiCorp** and select the "HashiCorp Terraform 2.x.y" extension. Click the green **Install** button to install the extension. Then click the **Reload Required** button to activate it. Then click the icon with two pages under the File menu so you can see your Terraform files again.
+    If you see a popup saying that Terraform 0.x is installed, just close it. We have updated Terraform for you. You can check the version by running `terraform version`.  We have enabled auto-save in your Code Editor, so any changes you make will be saved as you type.  We recommend executing all commands on the "Shell" tab. But you can also open and use a terminal window at the bottom of the Visual Code Editor by using the Terminal > New Terminal menu or the **<ctrl>-`** shortcut.  On Mac its **<cmd> J**.  If you do use the VS Code terminal, you can toggle its size up and down with the `^` and inverted `^` buttons above it. You can get rid of it with the garbage can and `x` icons.
 
-    If you see a popup saying that Terraform 0.8 is installed, just close it. We have updated Terraform for you. You can check the version by running `terraform version`.
+    Authenticate and Connect to your new Cluster by running this command.
+    ```
+    ./setkubectl.sh
+    ```
 
-    We have enabled auto-save in your Code Editor, so any changes you make will be saved as you type. You don't have to worry about saving files manually.
+    With our newly provisioned GKE cluster we can now install Vault using helm.
+    ```
+    helm repo add hashicorp https://helm.releases.hashicorp.com
+    helm install vault-primary hashicorp/vault -f vault.yaml
+    ```
 
-    We recommend executing all commands on the "Shell" tab. But you can also open and use a terminal window at the bottom of the Visual Code Editor by using the Terminal > New Terminal menu or the **<ctrl>-`** shortcut.
+    Check for the vault Kubernetes pods to be Running and get status
+    ```
+    kubectl get pods
+    kubectl exec vault-primary-0 -- vault status
+    ```
 
-    If you do use the VS Code terminal, you can toggle its size up and down with the `^` and inverted `^` buttons above it. You can get rid of it with the garbage can and `x` icons.
+    Initialize Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic or use the temporary one.
+    ```
+    ../scripts/init_vault.sh
+    ```
 
-    Congratulations, you are ready to start working with Terraform on GCP. We'll use the hashicat-gcp example app in the rest of the challenges as you learn new Terraform skills.
-
-    Click the **Check** button to continue.
+    Create a LoadBalancer to expose the Primary cluster's active node for DR replication.
+    ```
+    kubectl create -f vault-active-lb.yaml
+    kubectl get svc vault-active-lb
+    ```
+    If the external IP is pending, wait a minute and try again.  Copy this imports.
   notes:
   - type: text
     contents: "Welcome to your first day on the job at ACME Inc. These are some of
@@ -82,10 +102,71 @@ challenges:
     type: service
     hostname: workstation
     port: 8443
-  - title: Text Editor
-    type: code
+  - title: Shell
+    type: terminal
     hostname: workstation
-    path: /root
+  - title: GCP Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
+  difficulty: basic
+  timelimit: 1800
+- slug: vault-dr-setup
+  id: p8t89pxfbose
+  type: challenge
+  title: Vault DR Setup
+  teaser: DR is critical for Operations.  Provide the highest SLA's for secrets management
+    by setting up Vault's DR replication.
+  assignment: |-
+    Lets get started building our GKE cluster using OSS Terraform. Jump to the `Shell` Tab.  We'll use the gcp-gke repo that has already been cloned for you.
+
+    ## Create the Vault DR Cluster on GKE using terraform
+    Make sure you're in the `./us-central-dr`directory.  Use vi or the Code Editor Tab to edit **terraform.tfvars** and customize your environment.  Then run terraform below.
+    ```
+    terraform init
+    terraform apply -auto-approve
+    ```
+    You should see green output with your GKE cluster information. If you see errors investigate.
+
+    While your GKE cluster is being created lets sit down at your workstation and open your text editor, Visual Studio Code.  Open the Code Editor tab on the left. First get familiar with the menus. This is running the Visual Studio Code editor.  If you do use VS Code, please perform the following steps
+
+    Notice the menu bar with File, Edit, and other menus at the top of the VS Code Editor. You can find all the menus on this menu bar.
+
+    You should see some files in the explorer bar on the left side menu. These are terraform config files to build our Kubernetes Cluster.\n\nNext you should install the Terraform extension to enable syntax highlighting in your code. Click on the extensions icon - it looks like four small boxes with one slightly out of position.
+
+    Search for `HashiCorp` and select the **"HashiCorp Terraform 2.x.y"** extension. Click the green **Install** button to install the extension. Then click the **Reload Required** button to activate it. Then click the icon with two pages under the File menu so you can see your Terraform file list.
+
+    If you see a popup saying that Terraform 0.x is installed, just close it. We have updated Terraform for you. You can check the version by running `terraform version`.  We have enabled auto-save in your Code Editor, so any changes you make will be saved as you type.  We recommend executing all commands on the "Shell" tab. But you can also open and use a terminal window at the bottom of the Visual Code Editor by using the Terminal > New Terminal menu or the **<ctrl>-`** shortcut.  On Mac its **<cmd> J**.  If you do use the VS Code terminal, you can toggle its size up and down with the `^` and inverted `^` buttons above it. You can get rid of it with the garbage can and `x` icons.
+
+    Authenticate and Connect to your new Cluster by running this command.
+    ```
+    ./setkubectl.sh
+    ```
+
+    With our newly provisioned GKE cluster we can now install Vault using helm.
+    ```
+    helm install vault-dr hashicorp/vault -f vault.yaml
+    ```
+
+    Check for the vault Kubernetes pods to be Running and get status
+    ```
+    kubectl get pods
+    kubectl exec vault-dr-0 -- vault status
+    ```
+
+    Initialize Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic or use the temporary one.
+    ```
+    ../scripts/init_vault.sh
+    ```
+  notes:
+  - type: text
+    contents: Vault DR Replication is an Enterprise feature.
+  tabs:
+  - title: Code Editor
+    type: service
+    hostname: workstation
+    port: 8443
   - title: Shell
     type: terminal
     hostname: workstation
@@ -889,4 +970,4 @@ challenges:
     hostname: workstation
   difficulty: basic
   timelimit: 1800
-checksum: "10188873544348691677"
+checksum: "6013085568656163652"
