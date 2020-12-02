@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+# Create /tmp/skip-check to disable this check
+if [ -f /tmp/skip-check ]; then
+    rm /tmp/skip-check
+    exit 0
+fi
+
+[[ -f /bin/set-workdir ]] || fail-message "Uh oh, you're missing the set-workdir script. Please restart your track."
+
+GITDIR="/root/gcp-gke"
+
+cd ${GITDIR}/us-central-dr
+
+# GKE Cluster should be built already during initial setup.
+#terraform init
+#terraform apply -auto-approve
+./setkubectl.sh
+kubectl exec -ti vault-dr-0 -- vault read sys/replication/dr/status
+
+exit 0

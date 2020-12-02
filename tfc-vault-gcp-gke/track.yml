@@ -25,10 +25,10 @@ developers:
 private: true
 published: false
 challenges:
-- slug: setup-our-environment
-  id: brexo1gu3wxn
+- slug: setup-vault-primary
+  id: rmbnlqnwyj1r
   type: challenge
-  title: "\U0001F3E1 Set Up Your Vault"
+  title: "\U0001F947 Set Up Your Primary Vault Cluster"
   teaser: |
     Configure your code editor for Terraform and open a workspace.
   assignment: "Lets get started building our GKE cluster using OSS Terraform. \nWe'll
@@ -103,9 +103,6 @@ challenges:
   - title: us-west-primary
     type: terminal
     hostname: workstation
-  - title: us-central-dr
-    type: terminal
-    hostname: workstation
   - title: GCP Console
     type: service
     hostname: cloud-client
@@ -113,14 +110,14 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-- slug: vault-dr-setup
-  id: p8t89pxfbose
+- slug: setup-vault-dr
+  id: gvy7iagspn5m
   type: challenge
-  title: Vault DR Setup
+  title: "\U0001F948 Setup your Secondary Vault DR Cluster"
   teaser: DR is critical for Operations.  Provide the highest SLA's for secrets management
     by setting up Vault's DR replication.
   assignment: |-
-    Lets get started building our GKE cluster using OSS Terraform. Jump to the `Shell` Tab.  We'll use the gcp-gke repo that has already been cloned for you.
+    Lets build another GKE cluster in a new region using Terraform. Jump to the `us-central-dr` Tab.
 
     ## Create the Vault DR Cluster on GKE using terraform
     Make sure you're in the `./us-central-dr`directory.  Use vi or the Code Editor Tab to edit **terraform.tfvars** and customize your environment.  Then run terraform below.
@@ -248,10 +245,106 @@ challenges:
     type: service
     hostname: workstation
     port: 8443
-  - title: us-west-primary
+  - title: us-central-dr
     type: terminal
     hostname: workstation
-  - title: us-central-dr
+  - title: GCP Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
+  difficulty: basic
+  timelimit: 1800
+- slug: setup-vault-replication
+  id: gjrada3zvl7o
+  type: challenge
+  title: "\U0001F5C2 Setup Multi-Region DR Replication"
+  teaser: DR is critical for Operations.  Setup Vault's DR replication to provide
+    the highest SLA's.
+  assignment: |-
+    Jump to the `Shell` Tab.  We'll start setting up replication on the Primary cluster.
+
+    ## Setup Vault DR replication
+    Go to the `us-west-primary Tab`, change directory and load the primary GKE context.
+    ```
+    cd ../us-west-primary
+    ./setkubectl.sh
+    ```
+
+    ### Get External service IP
+    To enable Replication on the primary we need the External Service IP to route across GKE clusters.
+    ```
+    ext_ip=$(kubectl get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+    echo "Ext IP: ${ext_ip}"
+    ```
+    We should see the External IP of the vault-primary-active-lb service.  We are enabling replication on the primary and overriding the local cluster_address with this external endpoint so our DR cluster can establish a connection.
+
+    ### Enable Replication on the Primary
+    ```
+    kubectl exec -ti vault-primary-0 -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
+    ```
+    The cluster_address is used for server to server communication.  Whether using TLS or not vault will always encrypt this traffic.  So this URL should always be https.
+
+    ### Create a token for the DR cluster to use
+    ```
+    kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=dr -format=json | tee tmp/secondary-token.json
+    ```
+
+    The primary is now setup.  Lets jump back over to the dr cluster and configure replication.
+    ```
+    cd ../us-central-dr
+    ./setkubectl.sh
+    ```
+
+    ### Get the Vault primary external service IP
+    ```
+    ext_ip=$(kubectl --context=primary get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+    echo "Ext IP: ${ext_ip}"
+    ```
+    We should see the External IP of the vault-primary-active-lb service.  To enable replication on the primary we will need a route to the primary clusters API.  The vault-primary-active-lb service gives us this.
+
+    ### Enable Replication with the primary
+    ```
+    token=$(jq -r '.wrap_info.token' < ../us-west-primary/tmp/secondary-token.json)
+    kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
+    ```
+
+    ### Check the DR cluster replication status
+    ```
+    kubectl exec -ti vault-dr-0 -- vault read sys/replication/dr/status
+    ```
+
+    ### Check Primary cluster replication status
+    ```
+    kubectl --context=primary exec -it vault-primary-0 -- vault read sys/replication/dr/status
+    ```
+    Note:  To quickly get the primary cluster status we are using `--context=primary` in the CLI.
+
+    ## Generate Operation Token
+    ```
+    kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -init -format=json | tee tmp/dr-token
+    nonce=$(jq -r '.nonce' < tmp/dr-token)
+    otp=$(jq -r '.otp' < tmp/dr-token)
+    recovery_keys=$(jq -r '.unseal_keys_b64[]' < tmp/dr-token)
+    ```
+
+    Use 3/5 auto-unseal recovery keys from the primary to meet 3/3 threshold.
+    ```
+    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -nonce=$nonce ${recovery_keys[0]} | jq -r ".encoded_token")
+    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -nonce=$nonce ${recovery_keys[1]} | jq -r ".encoded_token")
+    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -nonce=$nonce ${recovery_keys[2]} | jq -r ".encoded_token")
+    dr_op_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -decode=$dr_encoded_token -otp=$otp | jq -r ".token")
+    echo $dr_op_token
+    ```
+  notes:
+  - type: text
+    contents: Vault DR Replication is an Enterprise feature.
+  tabs:
+  - title: Code Editor
+    type: service
+    hostname: workstation
+    port: 8443
+  - title: Shell
     type: terminal
     hostname: workstation
   - title: GCP Console
@@ -1054,4 +1147,4 @@ challenges:
     hostname: workstation
   difficulty: basic
   timelimit: 1800
-checksum: "8639215668425296807"
+checksum: "16512355984964919847"
