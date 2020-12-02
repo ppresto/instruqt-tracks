@@ -160,10 +160,9 @@ challenges:
 
     Check the health of our Raft peers
     ```
-    cat tmp/cluster-keys.json  # sensitive information from init is stored here temporarily.
-    kubectl exec -ti vault-dr-0 -- vault login
     kubectl exec -ti vault-dr-0 -- vault operator raft list-peers
     ```
+    The init process already logs into vault for you.  If you need a login token for some reason you can always login again using `kubectl exec -ti vault-dr-0 -- vault login $(jq -r '.root_token' < tmp/cluster-keys.json)`
 
     ## Setup Vault DR replication
     Lets jump back over to our primary GKE Cluster. Go to the `us-west-primary Tab`, change directory and load the primary GKE context.
@@ -188,7 +187,7 @@ challenges:
 
     ### Create a token for the DR cluster to use
     ```
-    kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=dr
+    kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=dr -format=json | tee tmp/secondary-token.json
     ```
 
     The primary is now setup.  Lets jump back over to the dr cluster and configure replication.
@@ -206,7 +205,8 @@ challenges:
 
     ### Enable Replication with the primary
     ```
-    kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=<TOKEN FROM PRIMARY>
+    token=$(jq -r '.wrap_info.token' < ../us-west-primary/tmp/dr.token)
+    kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}>
     ```
 
     ### Check the DR cluster replication status
@@ -1033,4 +1033,4 @@ challenges:
     hostname: workstation
   difficulty: basic
   timelimit: 1800
-checksum: "16051258294104321625"
+checksum: "9400877412060326097"
