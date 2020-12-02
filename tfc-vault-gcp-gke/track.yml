@@ -70,12 +70,12 @@ challenges:
     overriding the standard helm chart with vaules in ./vault.yaml.  This includes
     things like the kms-creds secret needed for auto-unseal.  Use VSCode to take a
     closer look at our customizations.\n```\nhelm repo add hashicorp https://helm.releases.hashicorp.com\nhelm
-    install vault-primary hashicorp/vault -f vault.yaml\n```\n\nWhile the helm chart
-    is installing Vault lets setup an external LB we can use for cross GKE cluster
-    replication.  This will give us an external ip that will only route traffic to
-    our active node on ports 8200, 8201, 8202.  We have defined selectors like `vault-active:
-    \"true\"` to only target the active vault node to make replication work. \n```\nkubectl
-    apply -f vault-primary-active-lb.yaml\nkubectl get svc vault-primary-active-lb\n```\nIf
+    install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml\n```\n\nWhile
+    the helm chart is installing Vault lets setup an external LB we can use for cross
+    GKE cluster replication.  This will give us an external ip that will only route
+    traffic to our active node on ports 8200, 8201, 8202.  We have defined selectors
+    like `vault-active: \"true\"` to only target the active vault node to make replication
+    work. \n```\nkubectl apply -f vault-primary-active-lb.yaml\nkubectl get svc vault-primary-active-lb\n```\nIf
     the external ip is 'pending' just wait and look it up again in a minute.\n\nAt
     this point vault should be installed. Verify the vault pods are READY and get
     status\n```\nkubectl get pods\nkubectl exec vault-primary-0 -- vault status\n```\n\nInitialize
@@ -162,7 +162,11 @@ challenges:
     ```
     kubectl exec -ti vault-dr-0 -- vault operator raft list-peers
     ```
-    The init process already logs into vault for you.  If you need a login token for some reason you can always login again using `kubectl exec -ti vault-dr-0 -- vault login $(jq -r '.root_token' < tmp/cluster-keys.json)`
+    This command requires an active token.  init_vault.sh already logs into vault and sets this for the license update.
+    If you need a login token for some reason you can always login again using
+    ```
+    kubectl exec -ti vault-dr-0 -- vault login $(jq -r '.root_token' < tmp/cluster-keys.json)
+    ```
 
     ## Setup Vault DR replication
     Lets jump back over to our primary GKE Cluster. Go to the `us-west-primary Tab`, change directory and load the primary GKE context.
@@ -205,8 +209,8 @@ challenges:
 
     ### Enable Replication with the primary
     ```
-    token=$(jq -r '.wrap_info.token' < ../us-west-primary/tmp/dr.token)
-    kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}>
+    token=$(jq -r '.wrap_info.token' < ../us-west-primary/tmp/secondary-token.json)
+    kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
     ```
 
     ### Check the DR cluster replication status
@@ -219,6 +223,23 @@ challenges:
     kubectl --context=primary exec -it vault-primary-0 -- vault read sys/replication/dr/status
     ```
     Note:  To quickly get the primary cluster status we are using `--context=primary` in the CLI.
+
+    ## Generate Operation Token
+    ```
+    kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -init -format=json | tee tmp/dr-token
+    nonce=$(jq -r '.nonce' < tmp/dr-token)
+    otp=$(jq -r '.otp' < tmp/dr-token)
+    recovery_keys=$(jq -r '.unseal_keys_b64[]' < tmp/dr-token)
+    ```
+
+    Use 3/5 auto-unseal recovery keys from the primary to meet 3/3 threshold.
+    ```
+    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -nonce=$nonce ${recovery_keys[0]} | jq -r ".encoded_token")
+    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -nonce=$nonce ${recovery_keys[1]} | jq -r ".encoded_token")
+    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -nonce=$nonce ${recovery_keys[2]} | jq -r ".encoded_token")
+    dr_op_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -decode=$dr_encoded_token -otp=$otp | jq -r ".token")
+    echo $dr_op_token
+    ```
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
@@ -1033,4 +1054,4 @@ challenges:
     hostname: workstation
   difficulty: basic
   timelimit: 1800
-checksum: "9400877412060326097"
+checksum: "5232502866886906022"

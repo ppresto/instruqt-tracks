@@ -9,4 +9,10 @@ fi
 
 [[ -f /bin/set-workdir ]] || fail-message "Uh oh, you're missing the set-workdir script. Please restart your track."
 
+if [[ $(helm list -o json | jq -r '.[].name' | grep vault) ]]; then
+    exit 0
+else
+    fail-message "Helm list shows: $(helm list -o json | jq -r '.[].name')"
+fi
+
 exit 0

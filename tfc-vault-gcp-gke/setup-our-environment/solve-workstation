@@ -4,15 +4,21 @@
 HISTFILE=/root/.bash_history
 set -o history
 
-cd us-west-primary
+GITDIR="/root/gcp-gke"
+
+cd ${GITDIR}/us-west-primary
+
 terraform init
 terraform apply -auto-approve
 ./setkubectl.sh
 
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm install vault-primary hashicorp/vault -f vault.yaml
+helm install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
 
+kubectl apply -f vault-primary-active-lb.yaml
+kubectl get svc vault-primary-active-lb
 
+sleep 40
 ../scripts/init_vault.sh
 
 exit 0
