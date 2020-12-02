@@ -8,8 +8,9 @@ GITDIR="/root/gcp-gke"
 
 cd ${GITDIR}/us-central-dr
 
-terraform init
-terraform apply -auto-approve
+# GKE Cluster should be built already during initial setup.
+#terraform init
+#terraform apply -auto-approve
 ./setkubectl.sh
 
 helm install vault-dr hashicorp/vault -f vault.yaml
