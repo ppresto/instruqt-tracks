@@ -19,7 +19,7 @@ echo "Ext IP: ${ext_ip}"
 
 kubectl exec -ti vault-primary-0 -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
 
-kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=dr -format=json | tee ${GITDIR}/tmp/secondary-token.json
+kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=dr -format=json | tee ${GITDIR}/us-west-primary/tmp/secondary-token.json
 
 # Setup Secondary
 sleep 30
@@ -32,7 +32,7 @@ kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable p
 sleep 30
 echo "Secondary DR Cluster Status:"
 kubectl exec -ti vault-dr-0 -- vault read sys/replication/dr/status
-echo "Primary DR Cluster Status:"
+echo "Secondary DR Cluster Status:"
 kubectl --context=primary exec -it vault-primary-0 -- vault read sys/replication/dr/status
 
 exit 0

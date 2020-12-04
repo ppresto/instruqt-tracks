@@ -1,0 +1,16 @@
+#!/bin/bash -l
+
+# Enable bash history
+HISTFILE=/root/.bash_history
+set -o history
+
+GITDIR="/root/gcp-gke"
+
+cd ${GITDIR}/us-central-dr
+
+# GKE Cluster should be built already during initial setup.
+#terraform init
+#terraform apply -auto-approve
+./setkubectl.sh
+
+exit 0
