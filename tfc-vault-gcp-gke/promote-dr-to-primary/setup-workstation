@@ -11,8 +11,13 @@ cd ${GITDIR}/us-west-primary
 
 export VAULT_SKIP_VERIFY=true
 export VAULT_ADDR="http://$(kubectl get svc vault-primary-ui -o json | jq -r '.status.loadBalancer.ingress[].ip'):8200"
-export TF_VAR_VAULT_ADDR=${VAULT_ADDR}
+grep "VAULT_ADDR=" /root/.bashrc || echo "export VAULT_ADDR=\"${VAULT_ADDR}\"" >> /root/.bashrc
+
 export VAULT_TOKEN="$(jq -r '.root_token' < tmp/cluster-keys.json)"
+grep "VAULT_TOKEN=" /root/.bashrc || echo "export VAULT_TOKEN=\"${VAULT_TOKEN}\"" >> /root/.bashrc
+
+export TF_VAR_VAULT_ADDR=${VAULT_ADDR}
+#grep "TF_VAR_VAULT_ADDR=" /root/.bashrc || echo "export TF_VAR_VAULT_ADDR="${VAULT_ADDR}" >> /root/.bashrc
 export TF_VAR_VAULT_TOKEN=${VAULT_TOKEN}
 
 # Set workdir
@@ -22,24 +27,6 @@ set-workdir ${GITDIR}/vault-administration
 cd ${GITDIR}/vault-administration
 terraform init
 terraform apply -auto-approve
-
-# Get vault-active pod
-vault_primary_active=$(kubectl  --namespace ${gke_namespace} get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
-
-# Create DR Operator Batch Token using the new "vault-dr-token" policy
-kubectl --namespace ${gke_namespace} exec -it ${vault_primary_active} -- vault token create -format=json -orphan -type=batch -policy=vault-dr-token | jq -r '.auth.client_token' | tee ${GITDIR}/us-west-primary/tmp/dr-batch-token
-dr_batch_token=$(cat ${GITDIR}/us-west-primary/tmp/dr-batch-token)
-
-# Enable UI on Localhost for Instruqt Tab: Vault UI
-echo -e "\nSetting up port-forward to ${vault_primary_active}"
-kubectl port-forward  --namespace ${gke_namespace} ${vault_primary_active} 8200:8200 &
-
-# Promote Vault DR to Primary
-cd ${GITDIR}/us-central-dr
-./setkubectl.sh
-vault_dr_active=$(kubectl  --namespace ${gke_namespace} get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
-
-kubectl exec -it ${vault_dr_active} -- vault write sys/replication/dr/secondary/promote dr_operation_token=${dr_batch_token}
 
 exit 0
 

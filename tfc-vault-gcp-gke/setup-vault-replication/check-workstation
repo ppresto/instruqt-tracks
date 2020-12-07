@@ -7,16 +7,6 @@ if [ -f /tmp/skip-check ]; then
     exit 0
 fi
 
-[[ -f /bin/set-workdir ]] || fail-message "Uh oh, you're missing the set-workdir script. Please restart your track."
-
-GITDIR="/root/gcp-gke"
-
-cd ${GITDIR}/us-central-dr
-
-# GKE Cluster should be built already during initial setup.
-#terraform init
-#terraform apply -auto-approve
-./setkubectl.sh
-kubectl exec -ti vault-dr-0 -- vault read sys/replication/dr/status
+kubectl --context=dr exec -ti vault-dr-0 -- vault read sys/replication/dr/status
 
 exit 0

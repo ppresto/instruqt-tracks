@@ -1,0 +1,20 @@
+#!/bin/bash -l
+
+# Enable bash history
+HISTFILE=/root/.bash_history
+set -o history
+
+GITDIR="/root/gcp-gke"
+
+# Set workdir
+set-workdir ${GITDIR}/us-west-primary
+cd ${GITDIR}/us-west-primary
+
+./setkubectl.sh
+
+# Run Terraform to create new KMS Keys and an updated custom vault.yaml.
+terraform apply -auto-approve
+
+helm install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
+
+exit 0

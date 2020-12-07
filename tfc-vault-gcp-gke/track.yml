@@ -3,15 +3,14 @@ id: 8yyamhy0xjxi
 type: track
 title: Vault DR - Multi Region GKE Clusters
 teaser: |
-  Join the ACME devops team on their journey to provision Vault in GCP on GKE.
+  Join the devops team on their journey to provision Vault in GCP on GKE.
 description: |-
-  Work with the devops team at Acme Inc. as they use Terraform Cloud to a fully automate the devops workflow with code reviews, testing, automated provisioning of Vault in GKE. This workshop covers the following topics:
+  Work with the devops team as they use Terraform to a fully automate provisioning Vault in GKE. This workshop covers the following topics:
 
+  * Multi Region GKE Vault Deployment
+  * Vault Enterprise with Integrated Storage (Raft)
   * Terraform Open Source
-  * Terraform Cloud
-  * Hashicorp Vault
-  * Vault with Integrated Storage (Raft)
-  * Vault DR across GCP Regions
+  * Disaster Recovery
 icon: https://storage.googleapis.com/instruqt-hashicorp-tracks/logo/vault.png
 tags:
 - terraform
@@ -31,70 +30,92 @@ challenges:
   title: "\U0001F947 Set Up Your Primary Vault Cluster"
   teaser: |
     Configure your code editor for Terraform and open a workspace.
-  assignment: "Lets get started building our GKE cluster using OSS Terraform. \nWe'll
-    use the **gcp-gke** repo that has already been cloned for you.\n\n## Create the
-    K8s Cluster with terraform\nMake sure you're in the `us-west-primary` Tab and
-    in /root/gcp-gke/us-west-primary. Use vi or the Code Editor Tab to edit **terraform.tfvars**
-    and customize your environment.  Then run terraform.\n```\nterraform init\nterraform
-    apply -auto-approve\n```\nYou should see green output with your GKE cluster information.
-    Take a look at the ./main.tf file to see what is being created.  Terraform is
-    creating our VPC and GKE cluster along with the KMS keys we will use to auto-unseal
-    vault.  Look at ../templates/override-values-autounseal.yaml to see how vault.yamlis
-    created.  The helm install uses this file to override defaults.\n\n## Take a tour
-    of Visual Studio Code\nWhile your GKE cluster is being created lets open your
-    text editor, Visual Studio Code.  Open the Code Editor tab on the left. First
-    get familiar with the menus. This is running the Visual Studio Code editor.  If
-    you do use VS Code, please perform the following steps\n\nNotice the menu bar
-    with File, Edit, and other menus at the top of the VS Code Editor. You can find
-    all the menus on this menu bar.\n\nYou should see some files in the explorer bar
-    on the left side menu. These are terraform config files to build our Kubernetes
-    Cluster.\\n\\nNext you should install the Terraform extension to enable syntax
-    highlighting in your code. Click on the extensions icon - it looks like four small
-    boxes with one slightly out of position.\n\nSearch for `HashiCorp` and select
-    the **\"HashiCorp Terraform 2.x.y\"** extension. Click the green **Install** button
-    to install the extension. Then click the **Reload Required** button to activate
-    it. Then click the icon with two pages under the File menu so you can see your
-    Terraform file list.\n\nIf you see a popup saying that Terraform 0.x is installed,
-    just close it. We have updated Terraform for you. You can check the version by
-    running `terraform version`.  We have enabled auto-save in your Code Editor, so
-    any changes you make will be saved as you type.  We recommend executing all commands
-    on the \"Shell\" tab. But you can also open and use a terminal window at the bottom
+  assignment: |-
+    Lets get started building our GKE cluster using OSS Terraform with the **gcp-gke** repo that has already been cloned for you.
+    ## Create the K8s Cluster with terraform
+    Make sure you're in the `us-west-primary` Tab and in dir /root/gcp-gke/us-west-primary. Use vi or the Code Editor Tab to edit **terraform.tfvars**
+    to customize your environment.  Then run terraform.
+    ```
+    terraform init
+    terraform apply -auto-approve
+    ```
+    You should see green output with your GKE cluster information.
+    Take a look at the ./main.tf file to see what is being created.
+    Terraform is creating our VPC and GKE cluster along with the KMS keys we will use to auto-unseal vault.
+    Look at ../templates/override-values-autounseal.yaml to see how vault.yaml is created.
+    The helm install uses this file to override defaults.
+
+    ## Visual Studio Code Tour
+    While your GKE cluster is being created, open your text editor, Visual Studio Code.
+    Open the Code Editor tab on the left. First get familiar with the menus. This is running the Visual Studio Code editor.
+
+    Notice the menu bar with File, Edit, and other menus at the top of the VS Code Editor. You can find all the menus on this menu bar.
+
+    You should see some files in the explorer bar on the left side menu. These are terraform config files to build our Kubernetes Cluster.
+
+    Next you should install the Terraform extension to enable syntax highlighting in your code. Click on the extensions icon - it looks like four small boxes with one slightly out of position.
+
+    Search for `HashiCorp` and select the **\"HashiCorp Terraform 2.x.y\"** extension.
+    Click the green **Install** button to install the extension. Then click the **Reload Required** button to activate it.
+    Then click the icon with two pages under the File menu so you can see your Terraform file list.
+    If you see a popup saying that Terraform 0.x is installed, just close it. We have updated Terraform for you.
+    You can check the version by running `terraform version`.  We have enabled auto-save in your Code Editor, so any changes you make will be saved as you type.
+    We recommend executing all commands on the \"Shell\" tab. But you can also open and use a terminal window at the bottom
     of the Visual Code Editor by using the Terminal > New Terminal menu or the **<ctrl>-`**
     shortcut.  On Mac its **<cmd> J**.  If you do use the VS Code terminal, you can
     toggle its size up and down with the `^` and inverted `^` buttons above it. You
-    can get rid of it with the garbage can and `x` icons.\n\n## Time to Install Vault
-    on GKE\nAuthenticate and Connect to your new Cluster.  \n```\n./setkubectl.sh\n```\n
+    can get rid of it with the garbage can and `x` icons.
+
+    ## Time to Install Vault on GKE
+    Authenticate and Connect to your new Cluster.
+    ```
+    ./setkubectl.sh
+    ```
     This script will authenticate us to GKE, and create a kms-creds k8s secret with
-    our GOOGLE_CREDENTIALS if it doesn't exist.  This is how we support GCP Auto-Unseal.\n\nWith
-    our newly provisioned GKE cluster we can now install Vault using helm.  We are
-    overriding the standard helm chart with vaules in ./vault.yaml.  This includes
+    our GOOGLE_CREDENTIALS if it doesn't exist.  This is how we support GCP Auto-Unseal.
+
+    With our newly provisioned GKE cluster we can now install Vault using helm.  First add the hashicorp helm repo.
+    Next, we'll override the standard helm chart with custom vaules in ./vault.yaml.  This includes
     things like the kms-creds secret needed for auto-unseal.  Use VSCode to take a
-    closer look at our customizations.\n```\nhelm repo add hashicorp https://helm.releases.hashicorp.com\nhelm
-    install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml\n```\n\nWhile
-    the helm chart is installing Vault lets setup an external LB we can use for cross
+    closer look at our customizations.
+    ```
+    helm repo add hashicorp https://helm.releases.hashicorp.com
+    ```
+    ```
+    helm install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
+    ```
+
+    While the helm chart is installing Vault lets setup an external LB we can use for cross
     GKE cluster replication.  This will give us an external ip that will only route
     traffic to our active node on ports 8200, 8201, 8202.  We have defined selectors
-    like `vault-active: \"true\"` to only target the active vault node to make replication
-    work. \n```\nkubectl apply -f vault-primary-active-lb.yaml\nkubectl get svc vault-primary-active-lb\n```\nIf
-    the external ip is 'pending' just wait and look it up again in a minute.\n\nAt
-    this point vault should be installed. Verify the vault pods are READY and get
-    status\n```\nkubectl get pods\nkubectl exec vault-primary-0 -- vault status\n```\n\nInitialize
-    Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic
-    or use the temporary one.\n```\n../scripts/init_vault.sh\n```\n\n.  You should
-    now be running a 3 node Vault Enterprise Cluster in GKE"
+    like `vault-active: "true"` to only target the active vault node to make replication
+    work.
+    ```
+    kubectl apply -f vault-primary-active-lb.yaml
+    kubectl get svc vault-primary-active-lb
+    ```
+    If the external ip is 'pending' just wait and look it up again in a minute.
+    At this point vault should be installed. Verify the vault pods are READY and get status
+    ```
+    kubectl get pods
+    kubectl exec vault-primary-0 -- vault status
+    ```
+    Initialize Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic
+    or use the temporary one.  Follow the [Install Enterprise-with-raft example](https://www.vaultproject.io/docs/platform/k8s/helm/examples/enterprise-with-raft) to join raft peers and apply the license.  Optionally, you can run `init_vault.sh`.
+    ```
+    ../scripts/init_vault.sh
+    ```
+
+    You should now be running a 3 node Vault Enterprise Cluster in GKE.  You can login to the vault UI using the following URL and token.
+
+    ```
+    ../scripts/getVaultUI.sh vault-primary-ui
+    ```
+    Enable the k/v engine and create your first vault secret
   notes:
   - type: text
-    contents: "Welcome to your first day on the job at ACME Inc. These are some of
-      your coworkers in the local ACME office:\n<center><table cellpadding=20>\n  <tr>\n
-      \   <td>\n    \U0001F468\U0001F3FB‍\U0001F4BC Hiro - Product Manager<br>\n    \U0001F9D5\U0001F3FD
-      Aisha - Database Admin<br>\n    \U0001F46E\U0001F3FF‍♂️ William - InfoSec Lead<br>\n
-      \   \U0001F468\U0001F3FB‍\U0001F9B2 Lars - Lead Developer<br>\n    </td>\n    <td>\n
-      \   \U0001F9D3\U0001F3FB Robin - Operations Admin<br>\n    \U0001F469‍\U0001F3A4
-      Jane - Quality Assurance<br>\n    \U0001F473\U0001F3FE‍♂️ Gaurav - Network Admin<br>\n
-      \   \U0001F469\U0001F3FC‍\U0001F4BC Karen - Finance    </td>\n  </tr>\n</table></center>\n\n<center>\U0001F913
-      You - Brand New Intern\n</center>"
-  - type: text
-    contents: Most modern text editors support Terraform syntax highlighting.
+    contents: "Welcome to your first day on the job.\n\n<center>\U0001F913 You - Brand
+      New Vault Admin\n</center>"
   tabs:
   - title: Code Editor
     type: service
@@ -144,6 +165,12 @@ challenges:
     helm install vault-dr hashicorp/vault -f vault.yaml
     ```
 
+    While the helm chart is installing Vault lets setup an external LB we can use in the future if we ever need to treat this DR cluster like a primary and setup replication to it.
+    ```
+    kubectl apply -f vault-dr-active-lb.yaml
+    kubectl get svc vault-dr-active-lb
+    ```
+
     Check for the vault Kubernetes pods to be Running and get status
     ```
     kubectl get pods
@@ -157,85 +184,15 @@ challenges:
 
     Check the health of our Raft peers
     ```
-    kubectl exec -ti vault-dr-0 -- vault operator raft list-peers
+    kubectl exec -ti vault-dr-0 -- \
+    vault operator raft list-peers
     ```
     This command requires an active token.  init_vault.sh already logs into vault and sets this for the license update.
-    If you need a login token for some reason you can always login again using
-    ```
-    kubectl exec -ti vault-dr-0 -- vault login $(jq -r '.root_token' < tmp/cluster-keys.json)
-    ```
+    If you need a login token for some reason you can login using the following command: `kubectl exec -ti vault-dr-0 -- vault login $(jq -r '.root_token' < tmp/cluster-keys.json)`
 
-    ## Setup Vault DR replication
-    Lets jump back over to our primary GKE Cluster. Go to the `us-west-primary Tab`, change directory and load the primary GKE context.
+    You can login to the DR clusters UI to confirm its available and empty.
     ```
-    cd ../us-west-primary
-    ./setkubectl.sh
-    ```
-
-    ### Get External service IP
-    To enable Replication on the primary we need the External Service IP to route across GKE clusters.
-    ```
-    ext_ip=$(kubectl get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
-    echo "Ext IP: ${ext_ip}"
-    ```
-    We should see the External IP of the vault-primary-active-lb service.  We are enabling replication on the primary and overriding the local cluster_address with this external endpoint so our DR cluster can establish a connection.
-
-    ### Enable Replication on the Primary
-    ```
-    kubectl exec -ti vault-primary-0 -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
-    ```
-    The cluster_address is used for server to server communication.  Whether using TLS or not vault will always encrypt this traffic.  So this URL should always be https.
-
-    ### Create a token for the DR cluster to use
-    ```
-    kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=dr -format=json | tee tmp/secondary-token.json
-    ```
-
-    The primary is now setup.  Lets jump back over to the dr cluster and configure replication.
-    ```
-    cd ../us-central-dr
-    ./setkubectl.sh
-    ```
-
-    ### Get the Vault primary external service IP
-    ```
-    ext_ip=$(kubectl --context=primary get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
-    echo "Ext IP: ${ext_ip}"
-    ```
-    We should see the External IP of the vault-primary-active-lb service.  To enable replication on the primary we will need a route to the primary clusters API.  The vault-primary-active-lb service gives us this.
-
-    ### Enable Replication with the primary
-    ```
-    token=$(jq -r '.wrap_info.token' < ../us-west-primary/tmp/secondary-token.json)
-    kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
-    ```
-
-    ### Check the DR cluster replication status
-    ```
-    kubectl exec -ti vault-dr-0 -- vault read sys/replication/dr/status
-    ```
-
-    ### Check Primary cluster replication status
-    ```
-    kubectl --context=primary exec -it vault-primary-0 -- vault read sys/replication/dr/status
-    ```
-    Note:  To quickly get the primary cluster status we are using `--context=primary` in the CLI.
-
-    ## Generate Operation Token
-    ```
-    kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -init -format=json | tee tmp/dr-token
-    nonce=$(jq -r '.nonce' < tmp/dr-token)
-    otp=$(jq -r '.otp' < tmp/dr-token)
-    recovery_keys=$(jq -r '.unseal_keys_b64[]' < tmp/dr-token)
-    ```
-
-    Use 3/5 auto-unseal recovery keys from the primary to meet 3/3 threshold.
-    ```
-    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -nonce=$nonce ${recovery_keys[0]} | jq -r ".encoded_token")
-    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -nonce=$nonce ${recovery_keys[1]} | jq -r ".encoded_token")
-    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -nonce=$nonce ${recovery_keys[2]} | jq -r ".encoded_token")
-    dr_op_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -decode=$dr_encoded_token -otp=$otp | jq -r ".token")
-    echo $dr_op_token
+    ../scripts/getVaultUI.sh vault-dr-ui
     ```
   notes:
   - type: text
@@ -281,13 +238,16 @@ challenges:
 
     ### Enable Replication on the Primary
     ```
-    kubectl exec -ti vault-primary-0 -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
+    kubectl exec -ti vault-primary-0 -- \
+    vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
     ```
     The cluster_address is used for server to server communication.  Whether using TLS or not vault will always encrypt this traffic.  So this URL should always be https.
 
     ### Create a token for the DR cluster to use
     ```
-    kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=dr -format=json | tee tmp/secondary-token.json
+    kubectl exec -ti vault-primary-0 -- \
+    vault write sys/replication/dr/primary/secondary-token id=dr -format=json \
+    | tee tmp/secondary-token.json
     ```
 
     The primary is now setup.  Lets jump back over to the dr cluster and configure replication.
@@ -295,13 +255,6 @@ challenges:
     cd ../us-central-dr
     ./setkubectl.sh
     ```
-
-    ### Get the Vault primary external service IP
-    ```
-    ext_ip=$(kubectl --context=primary get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
-    echo "Ext IP: ${ext_ip}"
-    ```
-    We should see the External IP of the vault-primary-active-lb service.  To enable replication on the primary we will need a route to the primary clusters API.  The vault-primary-active-lb service gives us this.
 
     ### Enable Replication with the primary
     ```
@@ -311,39 +264,16 @@ challenges:
 
     ### Check the DR cluster replication status
     ```
-    kubectl exec -ti vault-dr-0 -- vault read sys/replication/dr/status
+    kubectl --context=dr exec -ti vault-dr-0 -- \
+    vault read sys/replication/dr/status
     ```
 
     ### Check Primary cluster replication status
     ```
-    kubectl --context=primary exec -it vault-primary-0 -- vault read sys/replication/dr/status
+    kubectl --context=primary exec -it vault-primary-0 -- \
+    vault read sys/replication/dr/status
     ```
     Note:  To quickly get the primary cluster status we are using `--context=primary` in the CLI.
-
-    ## Generate Operation Token
-    ```
-    kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -init -format=json | tee tmp/dr-token
-    ```
-    ```
-    nonce=$(jq -r '.nonce' < tmp/dr-token)
-    ```
-    ```
-    otp=$(jq -r '.otp' < tmp/dr-token)
-    ```
-
-    Get 3/5 Recovery Keys to generate the operator token
-    ```
-    recovery_keys=$(jq -r '.recovery_keys_b64[]' < tmp/cluster-keys.json | head -3)
-    ```
-
-    Execute this 3 times to meet the 3/3 key threshold to obtain the "encoded_token"
-    ```
-    dr_encoded_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -format=json -dr-token -nonce=$nonce ${recovery_keys[0]} | jq -r ".encoded_token")
-    ```
-    ```
-    dr_op_token=$(kubectl exec -it vault-dr-0 -- vault operator generate-root -dr-token -decode=$dr_encoded_token -otp=$otp | jq -r ".token")
-    echo $dr_op_token
-    ```
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
@@ -365,11 +295,223 @@ challenges:
 - slug: promote-dr-to-primary
   id: 62zoapw6kd2y
   type: challenge
-  title: "\U0001F6A7  Promote the DR to Primary"
-  teaser: The GCP US West region just suffered a massive outage!  Its time to failover
-    and use our DR solution in US East.
-  assignment: Jump to the `Shell` Tab.  We'll start setting up replication on the
-    Primary cluster.
+  title: "\U0001F9BA  Promote the DR Cluster to Primary"
+  teaser: The US West region just suffered a massive outage!  Its time to failover
+    and our US Central Vault cluster.
+  assignment: |-
+    Go to the `Shell` Tab.
+    ### Check DR and Primary cluster replication status
+    ```
+    kubectl --context=dr \
+    exec -ti vault-dr-0 -- \
+    vault read sys/replication/dr/status
+    ```
+    ```
+    kubectl --context=primary \
+    exec -it vault-primary-0 -- \
+    vault read sys/replication/dr/status
+    ```
+
+    ### Create DR Operator Batch Token using the new "vault-dr-token" policy.
+    This token is required to performa failover, and can be done on the primary cluster anytime.
+    ```
+    vault_primary_active=$( \
+    kubectl --context=primary \
+    get pod --selector="vault-active=true" \
+    --output=jsonpath={.items..metadata.name})
+    ```
+    ```
+    kubectl --context=primary \
+    exec -it ${vault_primary_active} -- \
+    vault token create -format=json \
+    -orphan -type=batch -policy=vault-dr-token \
+    | jq -r '.auth.client_token' | \
+    tee /root/gcp-gke/us-west-primary/tmp/dr-batch-token
+    ```
+    ### Promote Vault DR to Primary
+    ```
+    dr_batch_token=$(cat /root/gcp-gke/us-west-primary/tmp/dr-batch-token)
+    ```
+    ```
+    vault_dr_active=$( \
+    kubectl --context=dr \
+    get pod --selector="vault-active=true" \
+    --output=jsonpath={.items..metadata.name})
+    ```
+    ```
+    kubectl --context=dr \
+    exec -it ${vault_dr_active} -- \
+    vault write sys/replication/dr/secondary/promote dr_operation_token=${dr_batch_token}
+    ```
+
+    Last, delete the remainder dr pods. Kubernetes will reschedule them and with auto-unseal enabled the DR cluster will now be ready to serve traffic.
+    ```
+    kubectl --context=dr delete pods -l vault-active=false
+    ```
+
+    Login to the DR clusters UI and confirm it has your previous policies and secrets.
+    ```
+    ../scripts/getVaultUI.sh vault-primary-ui
+    ```
+  notes:
+  - type: text
+    contents: Vault DR Replication is an Enterprise feature.
+  tabs:
+  - title: Code Editor
+    type: service
+    hostname: workstation
+    port: 8443
+  - title: Shell
+    type: terminal
+    hostname: workstation
+  - title: Vault UI
+    type: service
+    hostname: workstation
+    path: /ui/
+    port: 8200
+  - title: GCP Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
+  difficulty: basic
+  timelimit: 1800
+- slug: rebuild-primary-with-new-kms
+  id: dstk95a8rtvs
+  type: challenge
+  title: "\U0001F948 Rebuild a New Primary Cluster"
+  teaser: The GCP West Region is back up and its time to rebuild our Main cluster
+  assignment: |-
+    ## Create the new primary cluster
+    Use vi or the Code Editor Tab to review the updated KMS Key values in **terraform.tfvars**
+    ```
+    cd ./us-west-primary
+    cat terraform.tfvars
+    ```
+
+    Run terraform to create the new KMS key, and update the custom vault.yaml used in the helm install next.
+    ```
+    terraform apply -auto-approve
+    ```
+
+    Authenticate and Connect to the us-west GKE cluster.
+    ```
+    ./setkubectl.sh
+    ```
+
+    ### Install Vault using helm again, but this time with the updated vault.yaml that contains a new kms key.
+    ```
+    helm install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
+    ```
+
+    Check for the vault Kubernetes pods to be Running and get status
+    ```
+    kubectl get pods
+    kubectl exec vault-primary-0 -- vault status
+    ```
+
+    Initialize Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic or use the temporary one.  **Run this script from within the us-west-primary directory as shown below.**
+    ```
+    ../scripts/init_vault.sh
+    ```
+
+    Check the health of our Raft peers
+    ```
+    kubectl exec -ti vault-primary-0 -- \
+    vault operator raft list-peers
+    ```
+    This command requires an active login token.
+
+    ### Login to the DR cluster to setup replication to the new primary
+    ```
+    cd ../us-central-dr
+    ./setkubectl.sh
+    kubectl exec -ti vault-dr-0 -- vault login $VAULT_TOKEN
+    ```
+
+    Get the DR clusters external IP
+    ```
+    ext_ip=$(kubectl get svc vault-dr-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+    echo "Ext IP: ${ext_ip}"
+    ```
+    ```
+    kubectl exec -ti vault-dr-0 -- \
+    vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
+    ```
+
+    Create a token for the new cluster to use.  Replication should already be setup on the DR Cluster.
+    ```
+    kubectl exec -ti vault-dr-0 -- \
+    vault write sys/replication/dr/primary/secondary-token id=new-primary -format=json \
+    | tee tmp/new-primary-replication-token.json
+    ```
+    The promoted DR cluster now has everything our new primary cluster will need to enable replication.
+
+    ### Configure the new primary cluster as the DR.  Once replication is complete we will be able to fail back over and use our new primary.  Lets first authenticate.
+    ```
+    cd ../us-west-primary
+    ./setkubectl.sh
+    ```
+
+    Replicate with the promoted DR using the token we just created.
+    ```
+    token=$(jq -r '.wrap_info.token' < ../us-central-dr/tmp/new-primary-replication-token.json)
+    kubectl --context=primary exec -ti vault-primary-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
+    ```
+
+    ### Check DR and Primary cluster replication status
+    ```
+    kubectl --context=dr \
+    exec -ti vault-dr-0 -- \
+    vault read sys/replication/dr/status
+    ```
+    ```
+    kubectl --context=primary \
+    exec -it vault-primary-0 -- \
+    vault read sys/replication/dr/status
+    ```
+
+    ### Create DR Operator Batch Token
+    This token is required to performa failover, and can be done on the primary cluster anytime.
+    ```
+    vault_primary_active=$( \
+    kubectl --context=dr \
+    get pod --selector="vault-active=true" \
+    --output=jsonpath={.items..metadata.name})
+    ```
+    ```
+    kubectl --context=dr \
+    exec -it ${vault_primary_active} -- \
+    vault token create -format=json \
+    -orphan -type=batch -policy=vault-dr-token \
+    | jq -r '.auth.client_token' | \
+    tee /root/gcp-gke/us-central-dr/tmp/dr-batch-token
+    ```
+    ### Promote Vault DR to Primary
+    ```
+    dr_batch_token=$(cat /root/gcp-gke/us-central-dr/tmp/dr-batch-token)
+    ```
+    ```
+    vault_dr_active=$( \
+    kubectl --context=primary \
+    get pod --selector="vault-active=true" \
+    --output=jsonpath={.items..metadata.name})
+    ```
+    ```
+    kubectl --context=primary \
+    exec -it ${vault_dr_active} -- \
+    vault write sys/replication/dr/secondary/promote dr_operation_token=${dr_batch_token}
+    ```
+
+    Last, delete the remainder dr pods. Kubernetes will reschedule them and with auto-unseal enabled the DR cluster will now be ready to serve traffic.
+    ```
+    kubectl --context=primary delete pods -l vault-active=false
+    ```
+
+    Login to the DR clusters UI and confirm it has your previous policies and secrets.
+    ```
+    ../scripts/getVaultUI.sh vault-primary-ui
+    ```
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
@@ -392,34 +534,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-- slug: demote-primary-back-to-dr
-  id: jdyent6anvom
-  type: challenge
-  title: "\U0001F948 Demoting the Primary"
-  teaser: The GCP West Region is back up and we want all our applications in the Its
-    time to use our DR solution.
-  assignment: Jump to the `Shell` Tab.  We'll start setting up replication on the
-    Primary cluster.
-  notes:
-  - type: text
-    contents: Vault DR Replication is an Enterprise feature.
-  tabs:
-  - title: Code Editor
-    type: service
-    hostname: workstation
-    port: 8443
-  - title: Shell
-    type: terminal
-    hostname: workstation
-  - title: Vault US-West UI
-    type: service
-    hostname: vault1
-    port: 8200
-  - title: GCP Console
-    type: service
-    hostname: cloud-client
-    path: /
-    port: 80
-  difficulty: basic
-  timelimit: 1800
-checksum: "803153311400358847"
+checksum: "6406814953132165892"

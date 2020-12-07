@@ -7,10 +7,22 @@ set -o history
 GITDIR="/root/gcp-gke"
 
 cd ${GITDIR}/us-central-dr
+#./setkubectl.sh
 
-# GKE Cluster should be built already during initial setup.
-#terraform init
-#terraform apply -auto-approve
-./setkubectl.sh
+# Get vault-active pod
+vault_primary_active=$(kubectl --context=primary  --namespace ${gke_namespace} get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
+
+# Create DR Operator Batch Token using the new "vault-dr-token" policy
+kubectl --context=primary --namespace ${gke_namespace} exec -it ${vault_primary_active} -- vault token create -format=json -orphan -type=batch -policy=vault-dr-token | jq -r '.auth.client_token' | tee ${GITDIR}/us-west-primary/tmp/dr-batch-token
+dr_batch_token=$(cat ${GITDIR}/us-west-primary/tmp/dr-batch-token)
+
+# Cause disaster by completely removing vault and its data stores so there is nothing left. 
+# Include GKE --context
+../scripts/uninstall_vault.sh primary
+
+# Promote Vault DR to Primary
+vault_dr_active=$(kubectl --context=dr  --namespace ${gke_namespace} get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
+
+kubectl exec -it ${vault_dr_active} -- vault write sys/replication/dr/secondary/promote dr_operation_token=${dr_batch_token}
 
 exit 0
