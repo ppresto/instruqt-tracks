@@ -559,4 +559,27 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "14064968628822891752"
+- slug: sandbox
+  type: challenge
+  title: "Play"
+  teaser: All regions are up again with Replication enabled.
+  assignment: |-
+    ## Create the new primary cluster
+  notes:
+  - type: text
+    contents: Sanbox Environment
+  tabs:
+  - title: Shell
+    type: terminal
+    hostname: workstation
+  - title: Code Editor
+    type: service
+    hostname: workstation
+    port: 8443
+  - title: GCP Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
+  difficulty: basic
+  timelimit: 1800

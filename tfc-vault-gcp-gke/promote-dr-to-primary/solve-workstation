@@ -9,6 +9,11 @@ GITDIR="/root/gcp-gke"
 cd ${GITDIR}/us-central-dr
 #./setkubectl.sh
 
+# Authenticate to Vault
+kubectl --context=primary \
+exec -ti vault-dr-0 -- vault login \
+$(jq -r '.root_token' < tmp/cluster-keys.json)
+
 # Get vault-active pod
 vault_primary_active=$(kubectl --context=primary  --namespace ${gke_namespace} get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
 
@@ -24,5 +29,8 @@ dr_batch_token=$(cat ${GITDIR}/us-west-primary/tmp/dr-batch-token)
 vault_dr_active=$(kubectl --context=dr  --namespace ${gke_namespace} get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
 
 kubectl exec -it ${vault_dr_active} -- vault write sys/replication/dr/secondary/promote dr_operation_token=${dr_batch_token}
+
+sleep 5
+kubectl --context=dr delete pods -l vault-active=false
 
 exit 0

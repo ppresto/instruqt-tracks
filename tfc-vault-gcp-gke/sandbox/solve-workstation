@@ -1,0 +1,15 @@
+#!/bin/bash -l
+
+# Enable bash history
+HISTFILE=/root/.bash_history
+set -o history
+
+GITDIR="/root/gcp-gke"
+
+# Set workdir
+set-workdir ${GITDIR}/us-west-primary
+cd ${GITDIR}/us-west-primary
+
+./setkubectl.sh
+
+exit 0
