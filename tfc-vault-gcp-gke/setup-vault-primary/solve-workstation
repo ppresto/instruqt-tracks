@@ -26,4 +26,12 @@ kubectl get svc vault-primary-active-lb
 sleep 40
 ../scripts/init_vault.sh
 
+cd ${GITDIR}/vault-administration
+
+# getVaultUI will export VAULT ADDR and TOKEN Environment variables required by terraform.
+../scripts/getVaultUI.sh vault-primary-ui
+
+terraform init
+terraform apply -auto-approve
+
 exit 0

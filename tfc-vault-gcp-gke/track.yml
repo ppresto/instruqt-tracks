@@ -100,18 +100,32 @@ challenges:
     kubectl get pods
     kubectl exec vault-primary-0 -- vault status
     ```
-    Initialize Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic
-    or use the temporary one.  Follow the [Install Enterprise-with-raft example](https://www.vaultproject.io/docs/platform/k8s/helm/examples/enterprise-with-raft) to join raft peers and apply the license.  Optionally, you can run `init_vault.sh`.
+    Initialize Vault, join the other raft members, and apply your license by creating /tmp/vault-ent.hclic
+    or use the temporary one provided for you. [Use the Install Enterprise-with-raft example here](https://www.vaultproject.io/docs/platform/k8s/helm/examples/enterprise-with-raft) to initialize your cluster, join raft peers, and apply an Enterprise license.  Otherwise, for a quick setup run the command below.
     ```
     ../scripts/init_vault.sh
     ```
 
-    You should now be running a 3 node Vault Enterprise Cluster in GKE.  You can login to the vault UI using the following URL and token.
+    Setup the local Vault CLI Env, and get the Vault URL, and Login token.
+    ```
+    source ../scripts/getVaultUI.sh vault-primary-ui
+    ```
+    You should now be running a 3 node Vault Enterprise Cluster in GKE.  Use the VAULT_ADDR and VAULT_TOKEN to login to the vault UI.  You can now setup your policies, auth methods, and secrets engines.
+    But wait...
 
+    There is a better way to configure vault then using the UI or CLI.  Why don't we try to use IaC with the [Terraform Vault provider](https://registry.terraform.io/providers/hashicorp/vault/latest/docs).
     ```
-    ../scripts/getVaultUI.sh vault-primary-ui
+    cd ../vault-administration
+    terraform init
+    terraform apply -auto-approve
     ```
-    Enable the k/v engine and create your first vault secret
+    Now go take a look at your primary cluster's currently configured policies and secrets.
+
+    For a deeper dive into IaC, use the Code Editor tab to review the vault modules and main.tf being used to create a policy and enable kv-v2.
+    - `modules/vault-*`
+    - `vault-administration/main.tf`
+
+    FYI: We are populating a secret to show case how DR works, but we do not recommend managing sensitive secrets directly in your IaC.
   notes:
   - type: text
     contents: "Welcome to your first day on the job.\n\n<center>\U0001F913 You - Brand
@@ -241,7 +255,7 @@ challenges:
     kubectl exec -ti vault-primary-0 -- \
     vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
     ```
-    The cluster_address is used for server to server communication.  Whether using TLS or not vault will always encrypt this traffic.  So this URL should always be https.
+    The [cluster_address](https://www.vaultproject.io/docs/configuration/listener/tcp#cluster_address) is used for server to server communication.  Whether using TLS or not vault will always encrypt this traffic.  So this URL should always be https.
 
     ### Create a token for the DR cluster to use
     ```
@@ -264,13 +278,15 @@ challenges:
 
     ### Check the DR cluster replication status
     ```
-    kubectl --context=dr exec -ti vault-dr-0 -- \
+    kubectl --context=dr \
+    exec -ti vault-dr-0 -- \
     vault read sys/replication/dr/status
     ```
 
     ### Check Primary cluster replication status
     ```
-    kubectl --context=primary exec -it vault-primary-0 -- \
+    kubectl --context=primary \
+    exec -it vault-primary-0 -- \
     vault read sys/replication/dr/status
     ```
     Note:  To quickly get the primary cluster status we are using `--context=primary` in the CLI.
@@ -278,13 +294,13 @@ challenges:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
   tabs:
+  - title: Shell
+    type: terminal
+    hostname: workstation
   - title: Code Editor
     type: service
     hostname: workstation
     port: 8443
-  - title: Shell
-    type: terminal
-    hostname: workstation
   - title: GCP Console
     type: service
     hostname: cloud-client
@@ -299,8 +315,13 @@ challenges:
   teaser: The US West region just suffered a massive outage!  Its time to failover
     and our US Central Vault cluster.
   assignment: |-
-    Go to the `Shell` Tab.
-    ### Check DR and Primary cluster replication status
+    Go to the `Shell` Tab and auth into the DR GKE cluster.
+    ```
+    cd ../us-central-dr
+    ./setkubectl.sh
+    ```
+
+    ### Optionally: check the replication status for both DR and Primary
     ```
     kubectl --context=dr \
     exec -ti vault-dr-0 -- \
@@ -351,24 +372,24 @@ challenges:
 
     Login to the DR clusters UI and confirm it has your previous policies and secrets.
     ```
-    ../scripts/getVaultUI.sh vault-primary-ui
+    ../scripts/getVaultUI.sh vault-dr-ui
+    ```
+
+    Using the root token that was generated during the creationg of the DR cluster should Fail since it is now a mirror of the Primary.  Try using the token from the primary instead with the following command.
+    ```
+    jq -r ".root_token" < /root/gcp-gke/us-west-primary/tmp/cluster-keys.json
     ```
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
   tabs:
+  - title: Shell
+    type: terminal
+    hostname: workstation
   - title: Code Editor
     type: service
     hostname: workstation
     port: 8443
-  - title: Shell
-    type: terminal
-    hostname: workstation
-  - title: Vault UI
-    type: service
-    hostname: workstation
-    path: /ui/
-    port: 8200
   - title: GCP Console
     type: service
     hostname: cloud-client
@@ -385,8 +406,9 @@ challenges:
     ## Create the new primary cluster
     Use vi or the Code Editor Tab to review the updated KMS Key values in **terraform.tfvars**
     ```
-    cd ./us-west-primary
+    cd ../us-west-primary
     cat terraform.tfvars
+    grep "new" terraform.tfvars
     ```
 
     Run terraform to create the new KMS key, and update the custom vault.yaml used in the helm install next.
@@ -474,33 +496,33 @@ challenges:
     ### Create DR Operator Batch Token
     This token is required to performa failover, and can be done on the primary cluster anytime.
     ```
-    vault_primary_active=$( \
+    vault_promoteddr_active=$( \
     kubectl --context=dr \
     get pod --selector="vault-active=true" \
     --output=jsonpath={.items..metadata.name})
     ```
     ```
     kubectl --context=dr \
-    exec -it ${vault_primary_active} -- \
+    exec -it ${vault_promoteddr_active} -- \
     vault token create -format=json \
     -orphan -type=batch -policy=vault-dr-token \
     | jq -r '.auth.client_token' | \
-    tee /root/gcp-gke/us-central-dr/tmp/dr-batch-token
+    tee /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token
     ```
     ### Promote Vault DR to Primary
     ```
-    dr_batch_token=$(cat /root/gcp-gke/us-central-dr/tmp/dr-batch-token)
+    promote_newprimary_batch_token=$(cat /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token)
     ```
     ```
-    vault_dr_active=$( \
+    vault_newprimary_active=$( \
     kubectl --context=primary \
     get pod --selector="vault-active=true" \
     --output=jsonpath={.items..metadata.name})
     ```
     ```
     kubectl --context=primary \
-    exec -it ${vault_dr_active} -- \
-    vault write sys/replication/dr/secondary/promote dr_operation_token=${dr_batch_token}
+    exec -it ${vault_newprimary_active} -- \
+    vault write sys/replication/dr/secondary/promote dr_operation_token=${promote_newprimary_batch_token}
     ```
 
     Last, delete the remainder dr pods. Kubernetes will reschedule them and with auto-unseal enabled the DR cluster will now be ready to serve traffic.
@@ -512,21 +534,24 @@ challenges:
     ```
     ../scripts/getVaultUI.sh vault-primary-ui
     ```
+
+    We want to disable the DR cluster since it's still active and thinks its the primary.
+    ```
+    kubectl --context=dr \
+    exec -it ${vault_promoteddr_active} -- \
+    vault write -f sys/replication/dr/primary/disable
+    ```
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
   tabs:
+  - title: Shell
+    type: terminal
+    hostname: workstation
   - title: Code Editor
     type: service
     hostname: workstation
     port: 8443
-  - title: Shell
-    type: terminal
-    hostname: workstation
-  - title: Vault UI
-    type: service
-    hostname: workstation
-    port: 8200
   - title: GCP Console
     type: service
     hostname: cloud-client
@@ -534,4 +559,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "6406814953132165892"
+checksum: "14064968628822891752"
