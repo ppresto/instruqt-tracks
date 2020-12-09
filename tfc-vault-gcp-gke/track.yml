@@ -560,11 +560,11 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: sandbox
+  id: dk4q7etvnrbj
   type: challenge
-  title: "Play"
+  title: Play
   teaser: All regions are up again with Replication enabled.
-  assignment: |-
-    ## Create the new primary cluster
+  assignment: '## Create the new primary cluster'
   notes:
   - type: text
     contents: Sanbox Environment
@@ -583,3 +583,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
+checksum: "8573143032025491771"

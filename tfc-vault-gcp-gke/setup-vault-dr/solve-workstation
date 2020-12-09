@@ -15,6 +15,9 @@ cd ${GITDIR}/us-central-dr
 
 helm install vault-dr hashicorp/vault -f vault.yaml
 
+kubectl apply -f vault-dr-active-lb.yaml
+kubectl get svc vault-dr-active-lb
+
 sleep 40
 ../scripts/init_vault.sh
 
