@@ -1,16 +1,16 @@
-slug: vault-dr-multi-region-gke
+slug: poc-vault-gke-dr-multi-region
 id: 8yyamhy0xjxi
 type: track
 title: Vault DR - Multi Region GKE Clusters
 teaser: |
   Join the devops team on their journey to provision Vault in GCP on GKE.
 description: |-
-  Work with the devops team as they use Terraform to a fully automate provisioning Vault in GKE. This workshop covers the following topics:
+  POC to provision Vault in GCP on GKE.
 
-  * Multi Region GKE Vault Deployment
-  * Vault Enterprise with Integrated Storage (Raft)
-  * Terraform Open Source
-  * Disaster Recovery
+  * Automate Multi Region GKE Vault Deployment
+  * Use Vault Enterprise with Integrated Storage (Raft)
+  * Use Terraform Open Source
+  * Verify Disaster Recovery
 icon: https://storage.googleapis.com/instruqt-hashicorp-tracks/logo/vault.png
 tags:
 - terraform
@@ -22,14 +22,14 @@ owner: hashicorp
 developers:
 - ppresto@hashicorp.com
 private: true
-published: false
+published: true
 challenges:
 - slug: setup-vault-primary
   id: rmbnlqnwyj1r
   type: challenge
   title: "\U0001F947 Set Up Your Primary Vault Cluster"
   teaser: |
-    Configure your code editor for Terraform and open a workspace.
+    Provision Vault in GKE using Terraform and Helm.
   assignment: |-
     Lets get started building our GKE cluster using OSS Terraform with the **gcp-gke** repo that has already been cloned for you.
     ## Create the K8s Cluster with terraform
@@ -571,7 +571,7 @@ challenges:
 - slug: sandbox
   id: dk4q7etvnrbj
   type: challenge
-  title: Play
+  title: Sandbox
   teaser: All regions are up again with Replication enabled.
   assignment: '## Create the new primary cluster'
   notes:
@@ -592,4 +592,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "972615757337823440"
+checksum: "4710721999923003917"

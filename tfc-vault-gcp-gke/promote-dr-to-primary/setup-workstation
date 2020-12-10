@@ -21,7 +21,9 @@ export TF_VAR_VAULT_ADDR=${VAULT_ADDR}
 export TF_VAR_VAULT_TOKEN=${VAULT_TOKEN}
 
 # Set workdir
-set-workdir ${GITDIR}/vault-administration
+set-workdir ${GITDIR}/us-central-dr
+cd ${GITDIR}/us-central-dr
+./setkubectl.sh
 
 exit 0
 
