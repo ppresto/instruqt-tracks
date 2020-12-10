@@ -544,11 +544,10 @@ challenges:
     ../scripts/getVaultUI.sh vault-primary-ui
     ```
 
-    We want to disable the DR cluster since it's still active and thinks its the primary.
+    We want to demote the DR cluster since it's still active and thinks its the primary.
     ```
-    kubectl --context=dr \
-    exec -it ${vault_promoteddr_active} -- \
-    vault write -f sys/replication/dr/primary/disable
+    kubectl --context=dr exec -ti ${vault_promoteddr_active} -- \
+    vault write -f sys/replication/dr/primary/demote
     ```
   notes:
   - type: text
@@ -573,7 +572,70 @@ challenges:
   type: challenge
   title: Sandbox
   teaser: All regions are up again with Replication enabled.
-  assignment: '## Create the new primary cluster'
+  assignment: |-
+    Review our replication health.
+
+    Below are additional replication notes...
+    ## Get the Vault us-west cluster's active node, and External Replication IP
+    ```
+    promote_newprimary_batch_token=$(cat /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token)
+
+    ext_ip=$(kubectl --context=primary get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+    echo "Ext IP: ${ext_ip}"
+
+    vault_newprimary_active=$( \
+    kubectl --context=primary \
+    get pod --selector="vault-active=true" \
+    --output=jsonpath={.items..metadata.name})
+    ```
+
+    ## Promote the us-west cluster to be the new primary
+    ```
+    kubectl --context=primary \
+    exec -it ${vault_newprimary_active} -- \
+    vault write sys/replication/dr/secondary/promote \
+    dr_operation_token=${promote_newprimary_batch_token} \
+    primary_cluster_addr="https://${ext_ip}:8201"
+    ```
+
+    ## Create replication token for us-central cluster to reconnect
+    ```
+    kubectl --context=primary exec -ti ${vault_newprimary_active}  -- vault login $(cat ../us-west-primary/tmp/root.token.primary.json)
+    ```
+    ```
+    kubectl exec -ti ${vault_newprimary_active} -- \
+    vault write sys/replication/dr/primary/secondary-token id=new-secondary -format=json \
+    | tee tmp/new-secondary-replication-token.json
+    ```
+
+    ## create dr operation token
+    ```
+    kubectl --context=primary \
+    exec -it ${vault_newprimary_active} -- \
+    vault token create -format=json \
+    -orphan -type=batch -policy=vault-dr-token \
+    | jq -r '.auth.client_token' | \
+    tee /root/gcp-gke/us-west-primary/tmp/new-secondary-batch-token
+    ```
+
+    ## Now lets demote our us-central vault to secondary and update its primary endpoint
+    ```
+    vault_promoteddr_active=$( \
+    kubectl --context=dr \
+    get pod --selector="vault-active=true" \
+    --output=jsonpath={.items..metadata.name})
+    ```
+    ```
+    kubectl --context=dr exec -ti ${vault_promoteddr_active} -- \
+    vault write -f sys/replication/dr/primary/demote
+    ```
+    ```
+    kubectl --context=dr exec -ti ${vault_promoteddr_active} -- \
+    vault write sys/replication/dr/secondary/update-primary \
+    dr_operation_token=$(cat /root/gcp-gke/us-west-primary/tmp/new-secondary-batch-token) \
+    token=$(cat tmp/new-secondary-replication-token.json | jq -r '.wrap_info.token') \
+    primary_api_addr=http://${ext_ip}:8200
+    ```
   notes:
   - type: text
     contents: Sanbox Environment
@@ -592,4 +654,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "4710721999923003917"
+checksum: "11612345526991508836"
