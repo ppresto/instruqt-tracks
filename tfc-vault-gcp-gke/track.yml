@@ -349,6 +349,14 @@ challenges:
     | jq -r '.auth.client_token' | \
     tee /root/gcp-gke/us-west-primary/tmp/dr-batch-token
     ```
+
+    ### Lets simulate a disaster by deleting the primary vault and all its datastores.
+    ```
+    cd ../us-west-primary
+    ./setkubectl.sh
+    ../scripts/uninstall_vault.sh primary
+    ```
+
     ### Promote Vault DR to Primary
     ```
     dr_batch_token=$(cat /root/gcp-gke/us-west-primary/tmp/dr-batch-token)
@@ -444,11 +452,12 @@ challenges:
     ```
     This command requires an active login token.
 
-    ### Login to the DR cluster to setup replication to the new primary
+    ### Find and login to the promoted DR cluster leader to setup replication to the new primary
     ```
     cd ../us-central-dr
     ./setkubectl.sh
-    kubectl exec -ti vault-dr-0 -- vault login $VAULT_TOKEN
+    vault_promoteddr_active=$(kubectl --context=dr get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
+    kubectl exec -ti ${vault_promoteddr_active} -- vault login $VAULT_TOKEN
     ```
 
     Get the DR clusters external IP
@@ -457,13 +466,13 @@ challenges:
     echo "Ext IP: ${ext_ip}"
     ```
     ```
-    kubectl exec -ti vault-dr-0 -- \
+    kubectl exec -ti ${vault_promoteddr_active} -- \
     vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
     ```
 
     Create a token for the new cluster to use.  Replication should already be setup on the DR Cluster.
     ```
-    kubectl exec -ti vault-dr-0 -- \
+    kubectl exec -ti ${vault_promoteddr_active} -- \
     vault write sys/replication/dr/primary/secondary-token id=new-primary -format=json \
     | tee tmp/new-primary-replication-token.json
     ```
@@ -583,4 +592,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "8573143032025491771"
+checksum: "972615757337823440"

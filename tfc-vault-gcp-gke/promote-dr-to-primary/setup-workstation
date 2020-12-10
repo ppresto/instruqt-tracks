@@ -23,10 +23,5 @@ export TF_VAR_VAULT_TOKEN=${VAULT_TOKEN}
 # Set workdir
 set-workdir ${GITDIR}/vault-administration
 
-# Create Vault Policy with Terraform IaC
-cd ${GITDIR}/vault-administration
-terraform init
-terraform apply -auto-approve
-
 exit 0
 

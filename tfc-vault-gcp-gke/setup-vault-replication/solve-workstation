@@ -14,7 +14,7 @@ cd ${GITDIR}/us-west-primary
 ./setkubectl.sh
 
 # Setup Primary
-ext_ip=$(kubectl get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+ext_ip=$(kubectl --context=primary get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
 echo "Ext IP: ${ext_ip}"
 
 kubectl exec -ti vault-primary-0 -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
@@ -24,7 +24,7 @@ kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secon
 # Setup Secondary
 sleep 30
 cd ../us-central-dr
-    ./setkubectl.sh
+./setkubectl.sh
 
 token=$(jq -r '.wrap_info.token' < ${GITDIR}/us-west-primary/tmp/secondary-token.json)
 kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}

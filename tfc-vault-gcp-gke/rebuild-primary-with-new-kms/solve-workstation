@@ -79,6 +79,9 @@ kubectl --context=primary \
 exec -it ${vault_newprimary_active} -- \
 vault write sys/replication/dr/secondary/promote dr_operation_token=${promote_newprimary_batch_token}
 
+# kubectl exec -ti ${vault_newprimary_active} -- vault login $(jq -r '.root_token' < ../us-west-primary/tmp/cluster-keys.json)
+# kubectl exec -ti ${vault_newprimary_active} -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://35.247.78.21:8200
+
 kubectl --context=primary delete pods -l vault-active=false
 
 #Disable the DR cluster replication since it's still active as primary.

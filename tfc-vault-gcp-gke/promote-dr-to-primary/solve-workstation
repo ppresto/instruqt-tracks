@@ -4,13 +4,14 @@
 HISTFILE=/root/.bash_history
 set -o history
 
-GITDIR="/root/gcp-gke"
+gke_namespace=default
 
+GITDIR="/root/gcp-gke"
 cd ${GITDIR}/us-central-dr
-#./setkubectl.sh
+./setkubectl.sh
 
 # Authenticate to Vault
-kubectl --context=primary \
+kubectl --context=dr \
 exec -ti vault-dr-0 -- vault login \
 $(jq -r '.root_token' < tmp/cluster-keys.json)
 
@@ -23,14 +24,16 @@ dr_batch_token=$(cat ${GITDIR}/us-west-primary/tmp/dr-batch-token)
 
 # Cause disaster by completely removing vault and its data stores so there is nothing left. 
 # Include GKE --context
+cd ${GITDIR}/us-west-primary
+./setkubectl.sh
 ../scripts/uninstall_vault.sh primary
 
 # Promote Vault DR to Primary
 vault_dr_active=$(kubectl --context=dr  --namespace ${gke_namespace} get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
 
-kubectl exec -it ${vault_dr_active} -- vault write sys/replication/dr/secondary/promote dr_operation_token=${dr_batch_token}
+kubectl --context=dr exec -it ${vault_dr_active} -- vault write sys/replication/dr/secondary/promote dr_operation_token=${dr_batch_token}
 
-sleep 5
+sleep 1
 kubectl --context=dr delete pods -l vault-active=false
 
 exit 0

@@ -15,4 +15,7 @@ grep "GOOGLE_PROJECT=" /root/.bashrc || echo "export GOOGLE_PROJECT=\"$INSTRUQT_
 export GOOGLE_CREDENTIALS=$(echo $INSTRUQT_GCP_PROJECT_GCP_PROJECT_SERVICE_ACCOUNT_KEY | base64 -d | jq 'tostring')
 grep "GOOGLE_CREDENTIALS=" /root/.bashrc || echo "export GOOGLE_CREDENTIALS=$GOOGLE_CREDENTIALS" >> /root/.bashrc
 
+# save primary cluster root key to a file
+echo $(jq -r '.root_token' < ${GITDIR}/us-west-primary/tmp/cluster-keys.json) > ${GITDIR}/us-west-primary/tmp/root.token.primary.json
 exit 0
+
