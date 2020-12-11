@@ -53,40 +53,4 @@ kubectl --context=primary \
 exec -it vault-primary-0 -- \
 vault read sys/replication/dr/status
 
-
-### Create DR Operator Batch Token
-vault_promoteddr_active=$( \
-kubectl --context=dr \
-get pod --selector="vault-active=true" \
---output=jsonpath={.items..metadata.name})
-
-kubectl --context=dr \
-exec -it ${vault_promoteddr_active} -- \
-vault token create -format=json \
--orphan -type=batch -policy=vault-dr-token \
-| jq -r '.auth.client_token' | \
-tee /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token
-
-### Promote Vault DR to Primary
-promote_newprimary_batch_token=$(cat /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token)
-
-vault_newprimary_active=$( \
-kubectl --context=primary \
-get pod --selector="vault-active=true" \
---output=jsonpath={.items..metadata.name})
-
-kubectl --context=primary \
-exec -it ${vault_newprimary_active} -- \
-vault write sys/replication/dr/secondary/promote dr_operation_token=${promote_newprimary_batch_token}
-
-# kubectl exec -ti ${vault_newprimary_active} -- vault login $(jq -r '.root_token' < ../us-west-primary/tmp/cluster-keys.json)
-# kubectl exec -ti ${vault_newprimary_active} -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://35.247.78.21:8200
-
-kubectl --context=primary delete pods -l vault-active=false
-
-#Disable the DR cluster replication since it's still active as primary.
-kubectl --context=dr \
-exec -it ${vault_promoteddr_active} -- \
-vault write -f sys/replication/dr/primary/disable
-
 exit 0
