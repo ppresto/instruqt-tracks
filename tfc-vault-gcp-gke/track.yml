@@ -1,7 +1,7 @@
-slug: poc-vault-gke-dr-multi-region
-id: 8yyamhy0xjxi
+slug: poc-vault-gke-dr-multi-region-2
+
 type: track
-title: Vault DR - Multi Region GKE Clusters
+title: Vault DR - Multi Region GKE Clusters-2
 teaser: |
   Join the devops team on their journey to provision Vault in GCP on GKE.
 description: |-
@@ -25,7 +25,7 @@ private: true
 published: true
 challenges:
 - slug: setup-vault-primary
-  id: rmbnlqnwyj1r
+  
   type: challenge
   title: "\U0001F947 Set Up Your Primary Vault Cluster"
   teaser: |
@@ -146,7 +146,7 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: setup-vault-dr
-  id: gvy7iagspn5m
+  
   type: challenge
   title: "\U0001F948 Setup your Secondary Vault DR Cluster"
   teaser: DR is critical for Operations.  Provide the highest SLA's for secrets management
@@ -227,7 +227,7 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: setup-vault-replication
-  id: gjrada3zvl7o
+  
   type: challenge
   title: "\U0001F5C2 Setup Multi-Region DR Replication"
   teaser: DR is critical for Operations.  Setup Vault's DR replication to provide
@@ -309,7 +309,7 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: promote-dr-to-primary
-  id: 62zoapw6kd2y
+  
   type: challenge
   title: "\U0001F9BA  Promote the DR Cluster to Primary"
   teaser: The US West region just suffered a massive outage!  Its time to failover
@@ -406,7 +406,7 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: rebuild-primary-with-new-kms
-  id: dstk95a8rtvs
+  
   type: challenge
   title: "\U0001F948 Rebuild a New Primary Cluster"
   teaser: The GCP West Region is back up and its time to rebuild our Main cluster
@@ -490,6 +490,10 @@ challenges:
     kubectl --context=primary exec -ti vault-primary-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
     ```
 
+    Delete the remainder dr pods. Kubernetes will reschedule them and with auto-unseal enabled the DR cluster will now be ready to serve traffic.
+    ```
+    kubectl --context=primary delete pods -l vault-active=false
+    ```
     ### Check DR and Primary cluster replication status
     ```
     kubectl --context=dr \
@@ -501,54 +505,7 @@ challenges:
     exec -it vault-primary-0 -- \
     vault read sys/replication/dr/status
     ```
-
-    ### Create DR Operator Batch Token
-    This token is required to performa failover, and can be done on the primary cluster anytime.
-    ```
-    vault_promoteddr_active=$( \
-    kubectl --context=dr \
-    get pod --selector="vault-active=true" \
-    --output=jsonpath={.items..metadata.name})
-    ```
-    ```
-    kubectl --context=dr \
-    exec -it ${vault_promoteddr_active} -- \
-    vault token create -format=json \
-    -orphan -type=batch -policy=vault-dr-token \
-    | jq -r '.auth.client_token' | \
-    tee /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token
-    ```
-    ### Promote Vault DR to Primary
-    ```
-    promote_newprimary_batch_token=$(cat /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token)
-    ```
-    ```
-    vault_newprimary_active=$( \
-    kubectl --context=primary \
-    get pod --selector="vault-active=true" \
-    --output=jsonpath={.items..metadata.name})
-    ```
-    ```
-    kubectl --context=primary \
-    exec -it ${vault_newprimary_active} -- \
-    vault write sys/replication/dr/secondary/promote dr_operation_token=${promote_newprimary_batch_token}
-    ```
-
-    Last, delete the remainder dr pods. Kubernetes will reschedule them and with auto-unseal enabled the DR cluster will now be ready to serve traffic.
-    ```
-    kubectl --context=primary delete pods -l vault-active=false
-    ```
-
-    Login to the DR clusters UI and confirm it has your previous policies and secrets.
-    ```
-    ../scripts/getVaultUI.sh vault-primary-ui
-    ```
-
-    We want to demote the DR cluster since it's still active and thinks its the primary.
-    ```
-    kubectl --context=dr exec -ti ${vault_promoteddr_active} -- \
-    vault write -f sys/replication/dr/primary/demote
-    ```
+    The new us-west vault cluster should be the secondary dr.  Now that its replicating with the primary it will soon have all the data and be able to become the new primary.
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
@@ -568,15 +525,26 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: sandbox
-  id: dk4q7etvnrbj
+  
   type: challenge
   title: Sandbox
   teaser: All regions are up again with Replication enabled.
   assignment: |-
-    Review our replication health.
+    ## For DR operations we need to create a batch token from the primary clusters active node.
+    This token is required to perform promotions or demotions, and can be created on the primary cluster at anytime.
+    ```
+    vault_promoteddr_active=$(kubectl --context=dr get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
 
-    Below are additional replication notes...
-    ## Get the Vault us-west cluster's active node, and External Replication IP
+    kubectl --context=dr \
+    exec -it ${vault_promoteddr_active} -- \
+    vault token create -format=json \
+    -orphan -type=batch -policy=vault-dr-token \
+    | jq -r '.auth.client_token' | \
+    tee /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token
+    ```
+
+    ## Promote the us-west cluster to primary
+    First lets get the cluster's active node, primary_cluster_addr (Ext IP), and batch token we just created.
     ```
     promote_newprimary_batch_token=$(cat /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token)
 
@@ -589,7 +557,7 @@ challenges:
     --output=jsonpath={.items..metadata.name})
     ```
 
-    ## Promote the us-west cluster to be the new primary
+    Now we can promote the us-west cluster to be the new primary
     ```
     kubectl --context=primary \
     exec -it ${vault_newprimary_active} -- \
@@ -597,8 +565,10 @@ challenges:
     dr_operation_token=${promote_newprimary_batch_token} \
     primary_cluster_addr="https://${ext_ip}:8201"
     ```
+    Our new primary cluster has been promoted.  We should be able to see this updated status in the UI.  Now lets clean up our us-central vault cluster.  It still thinks its primary so we have no DR or replication happening.
 
-    ## Create replication token for us-central cluster to reconnect
+    ## Demote the us-central vault cluster and reestablish it as a secondary DR.
+    On our new primary (us-west) create a replication token to allow the us-central cluster to establish a new replication connection after its demoted.
     ```
     kubectl --context=primary exec -ti ${vault_newprimary_active}  -- vault login $(cat ../us-west-primary/tmp/root.token.primary.json)
     ```
@@ -608,7 +578,8 @@ challenges:
     | tee tmp/new-secondary-replication-token.json
     ```
 
-    ## create dr operation token
+    ## Create a DR operation token
+    The us-central cluster will need to update its primary endpoint to reestablish a connection as a new secondary dr.  This requires a DR operator token from the new primary.
     ```
     kubectl --context=primary \
     exec -it ${vault_newprimary_active} -- \
@@ -618,13 +589,7 @@ challenges:
     tee /root/gcp-gke/us-west-primary/tmp/new-secondary-batch-token
     ```
 
-    ## Now lets demote our us-central vault to secondary and update its primary endpoint
-    ```
-    vault_promoteddr_active=$( \
-    kubectl --context=dr \
-    get pod --selector="vault-active=true" \
-    --output=jsonpath={.items..metadata.name})
-    ```
+    ## Demote the us-central vault cluster to secondary and update its primary endpoint
     ```
     kubectl --context=dr exec -ti ${vault_promoteddr_active} -- \
     vault write -f sys/replication/dr/primary/demote
@@ -654,4 +619,3 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "11612345526991508836"
