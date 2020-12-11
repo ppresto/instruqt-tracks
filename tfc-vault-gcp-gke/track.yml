@@ -1,5 +1,5 @@
 slug: poc-vault-gke-dr-multi-region
-
+id: 8yyamhy0xjxi
 type: track
 title: Vault DR - Multi Region GKE Clusters
 teaser: |
@@ -22,10 +22,10 @@ owner: hashicorp
 developers:
 - ppresto@hashicorp.com
 private: true
-published: false
+published: true
 challenges:
 - slug: vscode-terraform-env
-  
+  id: ykhksnnr1wbz
   type: challenge
   title: "\U0001F3E1 Setup your workstation"
   teaser: Setup your workstation with VSCode and Terraform to build & configure vault
@@ -57,10 +57,6 @@ challenges:
     contents: Visual Studio Code is a popular Code Editor with many extensions that
       can help speed up and simplify coding and configuration projects.
   tabs:
-  - title: Code Editor
-    type: service
-    hostname: workstation
-    port: 8443
   - title: Shell
     type: terminal
     hostname: workstation
@@ -69,10 +65,14 @@ challenges:
     hostname: cloud-client
     path: /
     port: 80
+  - title: Code Editor
+    type: service
+    hostname: workstation
+    port: 8443
   difficulty: basic
   timelimit: 1800
 - slug: setup-vault-primary
-  
+  id: tct1rdqeiz6d
   type: challenge
   title: "\U0001F947 Setup the Primary DR Vault cluster (us-west)"
   teaser: |
@@ -173,7 +173,7 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: setup-vault-dr
-  
+  id: xdbrb1h7wic6
   type: challenge
   title: "\U0001F948 Setup the Secondary DR Vault cluster (us-central)"
   teaser: DR is critical for Operations.  Provide the highest SLA's for secrets management
@@ -255,9 +255,9 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: setup-vault-replication
-  
+  id: vwpwghga1mmn
   type: challenge
-  title: "\U0001F5C2 Setup multi-region DR replication between clusters"
+  title: "\U0001F5C2 Setup multi-region DR replication"
   teaser: DR is critical for Operations.  Setup Vault's DR replication to provide
     the highest SLA's.
   assignment: |-
@@ -337,9 +337,9 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: promote-dr-to-primary
-  
+  id: yq089typoab7
   type: challenge
-  title: "\U0001F9BA  Promote the secondary DR cluster (us-central) to primary"
+  title: "\U0001F9BA  Promote the secondary (us-central) to primary"
   teaser: The US West region just suffered a massive outage!  Its time to failover
     and our US Central Vault cluster.
   assignment: |-
@@ -436,7 +436,7 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: rebuild-primary-with-new-kms
-  
+  id: jmxu7uqoefwb
   type: challenge
   title: "\U0001F948 Rebuild the us-west cluster as a secondary DR"
   teaser: The GCP West Region is back up and its time to rebuild our Main cluster
@@ -555,7 +555,7 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: promote-new-primary-demote-secondary
-  
+  id: ottbg9e03gda
   type: challenge
   title: "\U0001F947 Promote the us-west cluster back to Primary"
   teaser: All regions are up, in sync, and its time to move the primary DR cluster
@@ -651,3 +651,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
+checksum: "12371577531209304674"
