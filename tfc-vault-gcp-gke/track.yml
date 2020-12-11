@@ -24,10 +24,57 @@ developers:
 private: true
 published: true
 challenges:
-- slug: setup-vault-primary
-  id: rmbnlqnwyj1r
+- slug: vscode-terraform-env
+  id: ykhksnnr1wbz
   type: challenge
-  title: "\U0001F947 Set Up Your Primary Vault Cluster"
+  title: "\U0001F3E1 Setup your workstation"
+  teaser: Setup your workstation with VSCode and Terraform to build & configure vault
+    with IaC
+  assignment: |-
+    ## Visual Studio Code Tour
+    Open your text editor, Visual Studio Code by going to the Code Editor tab on the left. First get familiar with the menus. This is running the Visual Studio Code editor.
+
+    Notice the menu bar with File, Edit, and other menus at the top of the VS Code Editor. You can find all the menus on this menu bar.
+
+    You should see some files in the explorer bar on the left side menu. These are terraform config files to build our Kubernetes Cluster.
+
+    Next you should install the Terraform extension to enable syntax highlighting in your code. Click on the extensions icon - it looks like four small boxes with one slightly out of position.
+
+    Search for `HashiCorp` and select the **\"HashiCorp Terraform 2.x.y\"** extension.
+    Click the green **Install** button to install the extension. Then click the **Reload Required** button to activate it.
+    Then click the icon with two pages under the File menu so you can see your Terraform file list.
+    If you see a popup saying that Terraform 0.x is installed, just close it. We have updated Terraform for you.
+    You can check the version by running `terraform version`.  We have enabled auto-save in your Code Editor, so any changes you make will be saved as you type.
+    We recommend executing all commands on the \"Shell\" tab. But you can also open and use a terminal window at the bottom
+    of the Visual Code Editor by using the Terminal > New Terminal menu or the **<ctrl>-`**
+    shortcut.  On Mac its **cmd + J**.  If you do use the VS Code terminal, you can
+    toggle its size up and down with the `^` and inverted `^` buttons above it. You
+    can get rid of it with the garbage can and `x` icons.
+
+    At this point you are ready to review and create your own terraform code.  You can bring up a shell within VS Code or use the Shell tab to run it.  We will do this  in the next assignment.
+  notes:
+  - type: text
+    contents: Visual Studio Code is a popular Code Editor with many extensions that
+      can help speed up and simplify coding and configuration projects.
+  tabs:
+  - title: Shell
+    type: terminal
+    hostname: workstation
+  - title: GCP Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
+  - title: Code Editor
+    type: service
+    hostname: workstation
+    port: 8443
+  difficulty: basic
+  timelimit: 1800
+- slug: setup-vault-primary
+  id: tct1rdqeiz6d
+  type: challenge
+  title: "\U0001F947 Setup the Primary DR Vault cluster (us-west)"
   teaser: |
     Provision Vault in GKE using Terraform and Helm.
   assignment: |-
@@ -44,27 +91,6 @@ challenges:
     Terraform is creating our VPC and GKE cluster along with the KMS keys we will use to auto-unseal vault.
     Look at ../templates/override-values-autounseal.yaml to see how vault.yaml is created.
     The helm install uses this file to override defaults.
-
-    ## Visual Studio Code Tour
-    While your GKE cluster is being created, open your text editor, Visual Studio Code.
-    Open the Code Editor tab on the left. First get familiar with the menus. This is running the Visual Studio Code editor.
-
-    Notice the menu bar with File, Edit, and other menus at the top of the VS Code Editor. You can find all the menus on this menu bar.
-
-    You should see some files in the explorer bar on the left side menu. These are terraform config files to build our Kubernetes Cluster.
-
-    Next you should install the Terraform extension to enable syntax highlighting in your code. Click on the extensions icon - it looks like four small boxes with one slightly out of position.
-
-    Search for `HashiCorp` and select the **\"HashiCorp Terraform 2.x.y\"** extension.
-    Click the green **Install** button to install the extension. Then click the **Reload Required** button to activate it.
-    Then click the icon with two pages under the File menu so you can see your Terraform file list.
-    If you see a popup saying that Terraform 0.x is installed, just close it. We have updated Terraform for you.
-    You can check the version by running `terraform version`.  We have enabled auto-save in your Code Editor, so any changes you make will be saved as you type.
-    We recommend executing all commands on the \"Shell\" tab. But you can also open and use a terminal window at the bottom
-    of the Visual Code Editor by using the Terminal > New Terminal menu or the **<ctrl>-`**
-    shortcut.  On Mac its **<cmd> J**.  If you do use the VS Code terminal, you can
-    toggle its size up and down with the `^` and inverted `^` buttons above it. You
-    can get rid of it with the garbage can and `x` icons.
 
     ## Time to Install Vault on GKE
     Authenticate and Connect to your new Cluster.
@@ -106,20 +132,21 @@ challenges:
     ../scripts/init_vault.sh
     ```
 
-    Setup the local Vault CLI Env, and get the Vault URL, and Login token.
-    ```
-    source ../scripts/getVaultUI.sh vault-primary-ui
-    ```
-    You should now be running a 3 node Vault Enterprise Cluster in GKE.  Use the VAULT_ADDR and VAULT_TOKEN to login to the vault UI.  You can now setup your policies, auth methods, and secrets engines.
+    You should now be running a 3 node Vault Enterprise Cluster in GKE.  You can ise the VAULT_ADDR and VAULT_TOKEN to login to the vault UI to setup policies, auth methods, and secrets engines.
     But wait...
 
     There is a better way to configure vault then using the UI or CLI.  Why don't we try to use IaC with the [Terraform Vault provider](https://registry.terraform.io/providers/hashicorp/vault/latest/docs).
     ```
+    source ../scripts/getVaultUI.sh vault-primary-ui
     cd ../vault-administration
     terraform init
     terraform apply -auto-approve
     ```
     Now go take a look at your primary cluster's currently configured policies and secrets.
+    Get the Vault URL, and Login token needed to access vault.
+    ```
+    ../scripts/getVaultUI.sh vault-primary-ui
+    ```
 
     For a deeper dive into IaC, use the Code Editor tab to review the vault modules and main.tf being used to create a policy and enable kv-v2.
     - `modules/vault-*`
@@ -146,9 +173,9 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: setup-vault-dr
-  id: gvy7iagspn5m
+  id: xdbrb1h7wic6
   type: challenge
-  title: "\U0001F948 Setup your Secondary Vault DR Cluster"
+  title: "\U0001F948 Setup the Secondary DR Vault cluster (us-central)"
   teaser: DR is critical for Operations.  Provide the highest SLA's for secrets management
     by setting up Vault's DR replication.
   assignment: |-
@@ -210,7 +237,8 @@ challenges:
     ```
   notes:
   - type: text
-    contents: Vault DR Replication is an Enterprise feature.
+    contents: "You've been asked to build a cloud agnostic DR solution for secrets
+      management. \n\n<center>\U0001F920 You - Junior Vault Admin\n</center>"
   tabs:
   - title: Code Editor
     type: service
@@ -227,9 +255,9 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: setup-vault-replication
-  id: gjrada3zvl7o
+  id: vwpwghga1mmn
   type: challenge
-  title: "\U0001F5C2 Setup Multi-Region DR Replication"
+  title: "\U0001F5C2 Setup multi-region DR replication"
   teaser: DR is critical for Operations.  Setup Vault's DR replication to provide
     the highest SLA's.
   assignment: |-
@@ -309,9 +337,9 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: promote-dr-to-primary
-  id: 62zoapw6kd2y
+  id: yq089typoab7
   type: challenge
-  title: "\U0001F9BA  Promote the DR Cluster to Primary"
+  title: "\U0001F9BA  Promote the secondary (us-central) to primary"
   teaser: The US West region just suffered a massive outage!  Its time to failover
     and our US Central Vault cluster.
   assignment: |-
@@ -378,8 +406,10 @@ challenges:
     kubectl --context=dr delete pods -l vault-active=false
     ```
 
-    Login to the DR clusters UI and confirm it has your previous policies and secrets.
+    Login to the DR clusters UI and confirm it has your previous policies and secrets.  Get the URL like this...
     ```
+    cd ../us-central-dr
+    ./setkubectl.sh
     ../scripts/getVaultUI.sh vault-dr-ui
     ```
 
@@ -406,9 +436,9 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: rebuild-primary-with-new-kms
-  id: dstk95a8rtvs
+  id: jmxu7uqoefwb
   type: challenge
-  title: "\U0001F948 Rebuild a New Primary Cluster"
+  title: "\U0001F948 Rebuild the us-west cluster as a secondary DR"
   teaser: The GCP West Region is back up and its time to rebuild our Main cluster
   assignment: |-
     ## Create the new primary cluster
@@ -490,6 +520,10 @@ challenges:
     kubectl --context=primary exec -ti vault-primary-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
     ```
 
+    Delete the remainder dr pods. Kubernetes will reschedule them and with auto-unseal enabled the DR cluster will now be ready to serve traffic.
+    ```
+    kubectl --context=primary delete pods -l vault-active=false
+    ```
     ### Check DR and Primary cluster replication status
     ```
     kubectl --context=dr \
@@ -501,54 +535,7 @@ challenges:
     exec -it vault-primary-0 -- \
     vault read sys/replication/dr/status
     ```
-
-    ### Create DR Operator Batch Token
-    This token is required to performa failover, and can be done on the primary cluster anytime.
-    ```
-    vault_promoteddr_active=$( \
-    kubectl --context=dr \
-    get pod --selector="vault-active=true" \
-    --output=jsonpath={.items..metadata.name})
-    ```
-    ```
-    kubectl --context=dr \
-    exec -it ${vault_promoteddr_active} -- \
-    vault token create -format=json \
-    -orphan -type=batch -policy=vault-dr-token \
-    | jq -r '.auth.client_token' | \
-    tee /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token
-    ```
-    ### Promote Vault DR to Primary
-    ```
-    promote_newprimary_batch_token=$(cat /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token)
-    ```
-    ```
-    vault_newprimary_active=$( \
-    kubectl --context=primary \
-    get pod --selector="vault-active=true" \
-    --output=jsonpath={.items..metadata.name})
-    ```
-    ```
-    kubectl --context=primary \
-    exec -it ${vault_newprimary_active} -- \
-    vault write sys/replication/dr/secondary/promote dr_operation_token=${promote_newprimary_batch_token}
-    ```
-
-    Last, delete the remainder dr pods. Kubernetes will reschedule them and with auto-unseal enabled the DR cluster will now be ready to serve traffic.
-    ```
-    kubectl --context=primary delete pods -l vault-active=false
-    ```
-
-    Login to the DR clusters UI and confirm it has your previous policies and secrets.
-    ```
-    ../scripts/getVaultUI.sh vault-primary-ui
-    ```
-
-    We want to demote the DR cluster since it's still active and thinks its the primary.
-    ```
-    kubectl --context=dr exec -ti ${vault_promoteddr_active} -- \
-    vault write -f sys/replication/dr/primary/demote
-    ```
+    The new us-west vault cluster should be the secondary dr.  Now that its replicating with the primary it will soon have all the data and be able to become the new primary.
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
@@ -567,16 +554,29 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-- slug: sandbox
-  id: dk4q7etvnrbj
+- slug: promote-new-primary-demote-secondary
+  id: ottbg9e03gda
   type: challenge
-  title: Sandbox
-  teaser: All regions are up again with Replication enabled.
+  title: "\U0001F947 Promote the us-west cluster back to Primary"
+  teaser: All regions are up, in sync, and its time to move the primary DR cluster
+    back to us-west, and demote the us-central cluster back to being the secondary
+    DR.
   assignment: |-
-    Review our replication health.
+    ## For DR operations we need to create a batch token from the primary clusters active node.
+    This token is required to perform promotions or demotions, and can be created on the primary cluster at anytime.
+    ```
+    vault_promoteddr_active=$(kubectl --context=dr get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
 
-    Below are additional replication notes...
-    ## Get the Vault us-west cluster's active node, and External Replication IP
+    kubectl --context=dr \
+    exec -it ${vault_promoteddr_active} -- \
+    vault token create -format=json \
+    -orphan -type=batch -policy=vault-dr-token \
+    | jq -r '.auth.client_token' | \
+    tee /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token
+    ```
+
+    ## Promote the us-west cluster to primary
+    First lets get the cluster's active node, primary_cluster_addr (Ext IP), and batch token we just created.
     ```
     promote_newprimary_batch_token=$(cat /root/gcp-gke/us-central-dr/tmp/promoted-dr-batch-token)
 
@@ -589,7 +589,7 @@ challenges:
     --output=jsonpath={.items..metadata.name})
     ```
 
-    ## Promote the us-west cluster to be the new primary
+    Now we can promote the us-west cluster to be the new primary
     ```
     kubectl --context=primary \
     exec -it ${vault_newprimary_active} -- \
@@ -597,8 +597,10 @@ challenges:
     dr_operation_token=${promote_newprimary_batch_token} \
     primary_cluster_addr="https://${ext_ip}:8201"
     ```
+    Our new primary cluster has been promoted.  We should be able to see this updated status in the UI.  Now lets clean up our us-central vault cluster.  It still thinks its primary so we have no DR or replication happening.
 
-    ## Create replication token for us-central cluster to reconnect
+    ## Demote the us-central vault cluster and reestablish it as a secondary DR.
+    On our new primary (us-west) create a replication token to allow the us-central cluster to establish a new replication connection after its demoted.
     ```
     kubectl --context=primary exec -ti ${vault_newprimary_active}  -- vault login $(cat ../us-west-primary/tmp/root.token.primary.json)
     ```
@@ -608,7 +610,8 @@ challenges:
     | tee tmp/new-secondary-replication-token.json
     ```
 
-    ## create dr operation token
+    ## Create a DR operation token
+    The us-central cluster will need to update its primary endpoint to reestablish a connection as a new secondary dr.  This requires a DR operator token from the new primary.
     ```
     kubectl --context=primary \
     exec -it ${vault_newprimary_active} -- \
@@ -618,13 +621,7 @@ challenges:
     tee /root/gcp-gke/us-west-primary/tmp/new-secondary-batch-token
     ```
 
-    ## Now lets demote our us-central vault to secondary and update its primary endpoint
-    ```
-    vault_promoteddr_active=$( \
-    kubectl --context=dr \
-    get pod --selector="vault-active=true" \
-    --output=jsonpath={.items..metadata.name})
-    ```
+    ## Demote the us-central vault cluster to secondary and update its primary endpoint
     ```
     kubectl --context=dr exec -ti ${vault_promoteddr_active} -- \
     vault write -f sys/replication/dr/primary/demote
@@ -654,4 +651,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "11612345526991508836"
+checksum: "12371577531209304674"
