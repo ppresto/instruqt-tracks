@@ -316,6 +316,13 @@ challenges:
     vault read sys/replication/performance/status
     ```
     Note:  To quickly get the primary cluster status we are using `--context=primary` in the CLI.
+
+    ### Restart Secondary Cluster
+    The standby pods in the secondary cluster need to be restarted so they are using the correct unseal key.  The active node is already using the updated key.
+    ```
+    kubectl delete pod -l vault-active=false
+    ```
+    Once the cluster is restarted you will not be able to login with the original root token.  You will need to use an Auth method that is configured on the primary cluster since it is now replicating everything to the secondary.
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
@@ -334,4 +341,30 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "4189794474644449772"
+- slug: poc-sandbox
+  id: ab1kst7potmn
+  type: challenge
+  title: Setup use cases
+  teaser: |
+    Sandbox
+  assignment: Sandbox
+  notes:
+  - type: text
+    contents: "Welcome to your first day on the job.\n\n<center>\U0001F913 You - Brand
+      New Vault Admin\n</center>"
+  tabs:
+  - title: Code Editor
+    type: service
+    hostname: workstation
+    port: 8443
+  - title: us-west
+    type: terminal
+    hostname: workstation
+  - title: GCP Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
+  difficulty: basic
+  timelimit: 7200
+checksum: "5059789544407822523"

@@ -19,7 +19,7 @@ echo "Ext IP: ${ext_ip}"
 
 kubectl exec -ti vault-primary-0 -- vault write -f sys/replication/performance/primary/enable primary_cluster_addr=https://${ext_ip}:8201
 
-kubectl exec -ti vault-primary-0 -- vault write sys/replication/performance/primary/secondary-token id=pr -format=json | tee ${GITDIR}/us-west-primary/tmp/secondary-token.json
+kubectl exec -ti vault-primary-0 -- vault write sys/replication/performance/primary/secondary-token id=secondary -format=json | tee ${GITDIR}/us-west/tmp/secondary-token.json
 
 # Setup Secondary
 sleep 30

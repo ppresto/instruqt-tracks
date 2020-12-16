@@ -28,8 +28,8 @@ sleep 40
 
 cd ${GITDIR}/vault-administration
 
-# getVaultUI will export VAULT ADDR and TOKEN Environment variables required by terraform.
-source ../scripts/getVaultUI.sh vault-primary-ui
+# Set K8s and Vault Environment variables required by terraform.
+source setenv.sh
 
 terraform init
 terraform apply -auto-approve
