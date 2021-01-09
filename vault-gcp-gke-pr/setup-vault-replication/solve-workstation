@@ -36,4 +36,13 @@ kubectl delete pods -l vault-active=false
 #echo "Secondary DR Cluster Status:"
 #kubectl --context=primary exec -it vault-primary-0 -- vault read sys/replication/performance/status
 
+
+# Setup Vault Namespaces (us-central)
+cd ${GITDIR}/vault-administration/uscentral
+
+# Set K8s, AppRole, and Vault Environment variables required to run Terraform.
+source set-project-env.sh
+
+terraform init
+terraform apply -auto-approve
 exit 0
