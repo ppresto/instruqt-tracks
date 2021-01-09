@@ -108,7 +108,7 @@ challenges:
     helm repo add hashicorp https://helm.releases.hashicorp.com
     ```
     ```
-    helm install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
+    helm install vault-usw hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
     ```
 
     While the helm chart is installing Vault lets setup an external LB we can use for cross
@@ -117,14 +117,14 @@ challenges:
     like `vault-active: "true"` to only target the active vault node to make replication
     work.
     ```
-    kubectl apply -f vault-primary-active-lb.yaml
-    kubectl get svc vault-primary-active-lb
+    kubectl apply -f vault-usw-active-lb.yaml
+    kubectl get svc vault-usw-active-lb
     ```
     If the external ip is 'pending' just wait and look it up again in a minute.
     At this point vault should be installed. Verify the vault pods are READY and get status
     ```
     kubectl get pods
-    kubectl exec vault-primary-0 -- vault status
+    kubectl exec vault-usw-0 -- vault status
     ```
     Initialize Vault, join the other raft members, and apply your license by creating /tmp/vault-ent.hclic
     or use the temporary one provided for you. [Use the Install Enterprise-with-raft example here](https://www.vaultproject.io/docs/platform/k8s/helm/examples/enterprise-with-raft) to initialize your cluster, join raft peers, and apply an Enterprise license.  Otherwise, for a quick setup run the command below.
@@ -142,11 +142,11 @@ challenges:
     terraform init
     terraform apply -auto-approve
     ```
-    Now go take a look at your primary cluster's currently configured policies and secrets.
+    Now go take a look at your primary cluster's (vault-usw) currently configured policies and secrets.
 
     Get the Vault URL, and Login token needed to access vault.
     ```
-    ../scripts/getVaultUI.sh vault-primary-ui
+    ../scripts/getVaultUI.sh vault-usw-ui
     ```
 
     For a deeper dive into IaC, use the Code Editor tab to review the vault modules and main.tf being used to configure Vault.  This will set up policies, userpass, and kv.  Additionally, we are creating namespaces by region so we can isolate our changes to specific regions and reduce possible outages due to misconfiguration.  Each region will have its own approle that's required to make any changes.
@@ -202,19 +202,19 @@ challenges:
 
     With our newly provisioned GKE cluster we can now install Vault using helm.
     ```
-    helm install vault-dr hashicorp/vault -f vault.yaml
+    helm install vault-usc hashicorp/vault -f vault.yaml
     ```
 
     While the helm chart is installing Vault lets setup an external LB we can use in the future if we ever need to treat this DR cluster like a primary and setup replication to it.
     ```
-    kubectl apply -f vault-dr-active-lb.yaml
-    kubectl get svc vault-dr-active-lb
+    kubectl apply -f vault-usc-active-lb.yaml
+    kubectl get svc vault-usc-active-lb
     ```
 
     Check for the vault Kubernetes pods to be Running and get status
     ```
     kubectl get pods
-    kubectl exec vault-dr-0 -- vault status
+    kubectl exec vault-usc-0 -- vault status
     ```
 
     Initialize Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic or use the temporary one.  **Run this script from within the us-centeral-dr directory as shown below.**
@@ -224,7 +224,7 @@ challenges:
 
     Check the health of our Raft peers
     ```
-    kubectl exec -ti vault-dr-0 -- \
+    kubectl exec -ti vault-usc-0 -- \
     vault operator raft list-peers
     ```
     This command requires an active token.  init_vault.sh already logs into vault and sets this for the license update.
@@ -232,7 +232,7 @@ challenges:
 
     You can login to the DR clusters UI to confirm its available and empty.
     ```
-    ../scripts/getVaultUI.sh vault-dr-ui
+    ../scripts/getVaultUI.sh vault-usc-ui
     ```
   notes:
   - type: text

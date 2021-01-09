@@ -18,10 +18,10 @@ terraform apply -auto-approve
 ./setkubectl.sh
 
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
+helm install vault-usw hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
 
-kubectl apply -f vault-primary-active-lb.yaml
-kubectl get svc vault-primary-active-lb
+kubectl apply -f vault-usw-active-lb.yaml
+kubectl get svc vault-usw-active-lb
 
 sleep 40
 ../scripts/init_vault.sh

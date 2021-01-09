@@ -9,7 +9,7 @@ snap install kubectl --classic
 snap install helm --classic
 
 # clone the terraform-guides repo
-git clone -b namespace https://github.com/ppresto/gcp-gke.git
+git clone -b full https://github.com/ppresto/gcp-gke.git
 GITDIR="/root/gcp-gke"
 
 # Set workdir
