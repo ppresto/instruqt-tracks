@@ -1,5 +1,4 @@
 slug: vault-gke-pr-multi-region-presto
-id: yuskmggbl0y6
 type: track
 title: Multi Region GKE Vault PR - presto
 teaser: |
@@ -25,7 +24,6 @@ private: true
 published: false
 challenges:
 - slug: vscode-terraform-env
-  id: 8bcpv1tbnxvm
   type: challenge
   title: "\U0001F3E1 Setup your workstation"
   teaser: Setup your workstation with VSCode and Terraform to build & configure vault
@@ -71,8 +69,7 @@ challenges:
     port: 8443
   difficulty: basic
   timelimit: 1800
-- slug: setup-vault-primary
-  id: k2fxbkfbfult
+- slug: setup-vault-usw-primary
   type: challenge
   title: "\U0001F947 Setup the Primary Vault cluster (us-west)"
   teaser: |
@@ -171,8 +168,7 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-- slug: setup-vault-pr
-  id: xxya9yxlkxhv
+- slug: setup-vault-usc-pr-secondary
   type: challenge
   title: "\U0001F948 Setup the Secondary Vault cluster (us-central)"
   teaser: Performance Replication allows us to replication data from our primary (us-west)
@@ -198,7 +194,7 @@ challenges:
     kubectl config get-contexts -o=name
     kubectl config current-context
     ```
-    To switch between contexts and look at our primary GKE cluster use `kubectl config use-context primary`.  Just remember to switch back!
+    To switch between contexts and look at our us-west GKE cluster use `kubectl config use-context usw`.  Just remember to switch back!
 
     With our newly provisioned GKE cluster we can now install Vault using helm.
     ```
@@ -253,8 +249,7 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-- slug: setup-vault-replication
-  id: 1zxbyl2qrzyd
+- slug: setup-vault-pr-replication
   type: challenge
   title: "\U0001F5C2 Setup multi-region Performance Replication"
   teaser: PR is critical for Operations.
@@ -269,53 +264,53 @@ challenges:
     ```
 
     ### Get External service IP
-    To enable Replication on the primary we need the External Service IP to route across GKE clusters.
+    To enable Replication on the us-west primary we need its External Service IP to route across GKE clusters.
     ```
-    ext_ip=$(kubectl get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+    ext_ip=$(kubectl get svc vault-usw-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
     echo "Ext IP: ${ext_ip}"
     ```
-    We should see the External IP of the vault-primary-active-lb service.  We are enabling replication on the primary and overriding the local cluster_address with this external endpoint so our DR cluster can establish a connection.
+    We should see the External IP of the vault-usw-active-lb service.  We are enabling replication on the primary and overriding the local cluster_address with this external endpoint so our DR cluster can establish a connection.
 
     ### Enable Replication on primary (us-west)
     ```
-    kubectl exec -ti vault-primary-0 -- \
+    kubectl exec -ti vault-usw-0 -- \
     vault write -f sys/replication/performance/primary/enable primary_cluster_addr=https://${ext_ip}:8201
     ```
     The [cluster_address](https://www.vaultproject.io/docs/configuration/listener/tcp#cluster_address) is used for server to server communication.  Whether using TLS or not vault will always encrypt this traffic.  So this URL should always be https.
 
     ### Create a replication token for the secondary (us-central)
     ```
-    kubectl exec -ti vault-primary-0 -- \
+    kubectl exec -ti vault-usw-0 -- \
     vault write sys/replication/performance/primary/secondary-token id=dr -format=json \
     | tee tmp/secondary-token.json
     ```
 
-    The primary is setup.  Lets jump back over to the secondary to configure replication.
+    The us-west is setup as primary.  Lets jump back over to us-central to configure it as a secondary.
     ```
     cd ../us-central
     ./setkubectl.sh
     ```
 
-    ### Enable Replication with the primary
+    ### Enable Replication with us-west
     ```
     token=$(jq -r '.wrap_info.token' < ../us-west/tmp/secondary-token.json)
-    kubectl exec -ti vault-dr-0 -- vault write sys/replication/performance/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
+    kubectl exec -ti vault-usc-0 -- vault write sys/replication/performance/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
     ```
 
     ### Check secondary replication status
     ```
-    kubectl --context=dr \
-    exec -ti vault-dr-0 -- \
+    kubectl --context=usc \
+    exec -ti vault-usc-0 -- \
     vault read sys/replication/performance/status
     ```
 
     ### Check primary replication status
     ```
-    kubectl --context=primary \
-    exec -it vault-primary-0 -- \
+    kubectl --context=usw \
+    exec -it vault-usw-0 -- \
     vault read sys/replication/performance/status
     ```
-    Note:  To quickly get the primary cluster status we are using `--context=primary` in the CLI.
+    Note:  To quickly get the us-west primary cluster status we are using `--context=usw` in the CLI.
 
     ### Restart Secondary Cluster
     The standby pods in the secondary cluster need to be restarted so they are using the correct unseal key.  The active node is already using the updated key.
@@ -323,6 +318,163 @@ challenges:
     kubectl delete pod -l vault-active=false
     ```
     Once the cluster is restarted you will not be able to login with the original root token.  You will need to use an Auth method that is configured on the primary cluster since it is now replicating everything to the secondary.
+  notes:
+  - type: text
+    contents: Vault DR Replication is an Enterprise feature.
+  tabs:
+  - title: Shell
+    type: terminal
+    hostname: workstation
+  - title: Code Editor
+    type: service
+    hostname: workstation
+    port: 8443
+  - title: GCP Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
+  difficulty: basic
+  timelimit: 1800
+- slug: setup-vault-usc-uswdr
+  type: challenge
+  title: "\U0001F948 Setup the us-west DR Vault cluster in us-central"
+  teaser: DR is critical for Operations.  Provide the highest SLA's for secrets management
+    by setting up Vault's DR replication.
+  assignment: |-
+    Lets build another vault cluster in us-central.  The GKE cluster should already be created for us.
+
+    ## Install dr cluster (uswdr)
+    Authenticate and Connect to us-cenral GKE cluster.
+    ```
+    cd ../us-central
+    ./setkubectl.sh
+    ```
+
+    Context's allow us to define and manage multiple GKE clusters.  Let's list all our contexts and identify which we are currently using.
+    ```
+    kubectl config get-contexts -o=name
+    kubectl config current-context
+    ```
+    To switch between contexts and look at our us-west GKE cluster use `kubectl config use-context usw`.  Just remember to switch back to usc!
+
+    Install Vault using helm.
+    ```
+    helm install vault-uswdr hashicorp/vault -f vault.yaml
+    ```
+
+    While the helm chart is installing Vault lets setup an external LB we can use in the future if we ever need to treat this DR cluster like a primary and setup replication to it.
+    ```
+    kubectl apply -f vault-uswdr-active-lb.yaml
+    kubectl get svc vault-uswdr-active-lb
+    ```
+
+    Check for the vault Kubernetes pods to be Running and get status
+    ```
+    kubectl get pods
+    kubectl exec vault-uswdr-0 -- vault status
+    ```
+
+    Initialize Vault, join the other raft members, and apply a license by creating /tmp/vault-ent.hclic or use the temporary one.  **Run this script from within the us-centeral directory as shown below.**
+    ```
+    ../scripts/init_vault.sh vault-uswdr
+    ```
+
+    Check the health of our Raft peers
+    ```
+    kubectl exec -ti vault-uswdr-0 -- \
+    vault operator raft list-peers
+    ```
+    This command requires an active token.  init_vault.sh already logs into vault and sets this for the license update.
+    If you need a login token for some reason you can login using the following command: `kubectl exec -ti vault-uswdr-0 -- vault login $(jq -r '.root_token' < tmp/cluster-keys.json)`
+
+    You can login to the DR clusters UI to confirm its available and empty by getting the External IP and root token.
+    ```
+    kubectl get svc vault-uswdr-ui  # external IP
+    cat ../us-central/tmp/vault-uswdr-cluster-keys.json  # created during initialization
+    ```
+  notes:
+  - type: text
+    contents: "You've been asked to build a cloud agnostic DR solution for secrets
+      management. \n\n<center>\U0001F920 You - Junior Vault Admin\n</center>"
+  tabs:
+  - title: Code Editor
+    type: service
+    hostname: workstation
+    port: 8443
+  - title: us-central-dr
+    type: terminal
+    hostname: workstation
+  - title: GCP Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
+  difficulty: basic
+  timelimit: 1800
+- slug: setup-vault-dr-replication
+  type: challenge
+  title: "\U0001F5C2 Setup multi-region DR replication"
+  teaser: DR is critical for Operations.  Setup Vault's DR replication to provide
+    the highest SLA's.
+  assignment: |-
+    Jump to the `Shell` Tab.  We'll start setting up replication on the Primary cluster.
+
+    ## Setup replication on the primary (vault-usw)
+    The Primary cluster will run in us-west.  Lets authenticate to this GKE cluster.
+    ```
+    cd ../us-west
+    ./setkubectl.sh
+    ```
+
+    ### Get External service IP
+    To enable Replication across networks we need the External Service IP to route across GKE clusters.
+    ```
+    ext_ip=$(kubectl get svc vault-usw-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+    echo "Ext IP: ${ext_ip}"
+    ```
+    We should see the External IP of the vault-usw-active-lb service.  We are enabling replication on the primary and overriding the local cluster_address with this external endpoint so our DR cluster can establish a connection.
+
+    ### Enable primary replication
+    ```
+    kubectl exec -ti vault-usw-0 -- \
+    vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
+    ```
+    The [cluster_address](https://www.vaultproject.io/docs/configuration/listener/tcp#cluster_address) is used for server to server communication.  Whether using TLS or not vault will always encrypt this traffic.  So this URL should always be https.
+
+    ### Create a token that the DR cluster will use
+    ```
+    kubectl exec -ti vault-usw-0 -- \
+    vault write sys/replication/dr/primary/secondary-token id=dr -format=json \
+    | tee tmp/dr-secondary-token.json
+    ```
+
+    The primary is now setup on vault-usw.  Lets jump back over to  uswdr cluster in us-central and configure replication.
+    ```
+    cd ../us-central
+    ./setkubectl.sh
+    ```
+
+    ### Enable Replication with the primary
+    ```
+    token=$(jq -r '.wrap_info.token' < ../us-west-primary/tmp/dr-secondary-token.json)
+    kubectl exec -ti vault-uswdr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
+    ```
+
+    ### Check the DR cluster replication status
+    ```
+    kubectl --context=usc \
+    exec -ti vault-uswdr-0 -- \
+    vault read sys/replication/dr/status
+    ```
+
+    ### Check Primary cluster replication status
+    ```
+    kubectl --context=usw \
+    exec -it vault-usw-0 -- \
+    vault read sys/replication/dr/status
+    ```
+    Note:  To quickly get the primary cluster status we are using `--context=usw` in the CLI.
   notes:
   - type: text
     contents: Vault DR Replication is an Enterprise feature.
@@ -367,4 +519,3 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 7200
-checksum: "3835414706350131282"
