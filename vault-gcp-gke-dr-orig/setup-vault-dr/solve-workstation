@@ -6,17 +6,17 @@ set -o history
 
 GITDIR="/root/gcp-gke"
 
-cd ${GITDIR}/us-central
+cd ${GITDIR}/us-central-dr
 
 # GKE Cluster should be built already during initial setup.
 #terraform init
 #terraform apply -auto-approve
 ./setkubectl.sh
 
-helm install vault-uswdr hashicorp/vault -f vault.yaml
+helm install vault-dr hashicorp/vault -f vault.yaml
 
-kubectl apply -f vault-uswdr-active-lb.yaml
-kubectl get svc vault-uswdr-active-lb
+kubectl apply -f vault-dr-active-lb.yaml
+kubectl get svc vault-dr-active-lb
 
 sleep 40
 ../scripts/init_vault.sh
