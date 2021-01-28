@@ -21,7 +21,7 @@ owner: hashicorp
 developers:
 - ppresto@hashicorp.com
 private: true
-published: false
+published: true
 challenges:
 - slug: vscode-terraform-env
   id: vfr45w7plje1

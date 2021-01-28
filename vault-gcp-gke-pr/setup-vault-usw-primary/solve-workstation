@@ -24,7 +24,7 @@ kubectl apply -f vault-usw-active-lb.yaml
 kubectl get svc vault-usw-active-lb
 
 sleep 40
-../scripts/init_vault.sh
+../scripts/init_vault.sh vault-usw
 
 cd ${GITDIR}/vault-administration
 

@@ -27,8 +27,8 @@ kubectl exec -ti vault-usc-0 -- vault login $(cat ../us-west/tmp/root.token.prim
 
 #Enable replication with the DR clusters external IP
 ext_ip=$(kubectl get svc vault-usc-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
-kubectl exec -ti vault-usc-0 -- \
 echo "Enable Replication using cluster_addr=https://${ext_ip}:8201"
+kubectl exec -ti vault-usc-0 -- \
 vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
 
 kubectl exec -ti vault-usc-0 -- \
