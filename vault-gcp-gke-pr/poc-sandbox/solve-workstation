@@ -1,0 +1,13 @@
+#!/bin/bash -l
+
+# Enable bash history
+HISTFILE=/root/.bash_history
+set -o history
+
+gke_namespace=default
+
+GITDIR="/root/gcp-gke"
+cd ${GITDIR}/us-central-dr
+./setkubectl.sh
+
+exit 0

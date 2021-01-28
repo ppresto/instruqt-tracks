@@ -1,0 +1,24 @@
+#!/bin/bash -l
+
+# Enable bash history
+HISTFILE=/root/.bash_history
+set -o history
+
+GITDIR="/root/gcp-gke"
+
+cd ${GITDIR}/us-central
+
+# GKE Cluster should be built already during initial setup.
+#terraform init
+#terraform apply -auto-approve
+./setkubectl.sh
+
+helm install vault-usc hashicorp/vault -f vault.yaml
+
+kubectl apply -f vault-usc-active-lb.yaml
+kubectl get svc vault-usc-active-lb
+
+sleep 40
+../scripts/init_vault.sh vault-usc
+
+exit 0

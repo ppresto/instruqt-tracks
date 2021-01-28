@@ -7,30 +7,30 @@ set -o history
 GITDIR="/root/gcp-gke"
 
 #Build the GKE DR cluster in parallel to save time.
-cd ${GITDIR}/us-central-dr
+cd ${GITDIR}/us-central
 terraform init
 terraform apply -auto-approve &
 
-cd ${GITDIR}/us-west-primary
+cd ${GITDIR}/us-west
 
 terraform init
 terraform apply -auto-approve
 ./setkubectl.sh
 
 helm repo add hashicorp https://helm.releases.hashicorp.com
-helm install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
+helm install vault-usw hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
 
-kubectl apply -f vault-primary-active-lb.yaml
-kubectl get svc vault-primary-active-lb
+kubectl apply -f vault-usw-active-lb.yaml
+kubectl get svc vault-usw-active-lb
 
 sleep 40
-../scripts/init_vault.sh
+../scripts/init_vault.sh vault-usw
 
 cd ${GITDIR}/vault-administration
 
 # getVaultUI will export VAULT ADDR and TOKEN Environment variables required by terraform.
-source ../scripts/getVaultUI.sh vault-primary-ui
 
+source setenv.sh
 terraform init
 terraform apply -auto-approve
 

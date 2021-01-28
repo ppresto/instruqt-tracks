@@ -1,0 +1,13 @@
+#!/bin/bash -l
+# set -e
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+GITDIR="/root/gcp-gke"
+
+# Using zone for the region in tf makes smaller GKS footprint
+gke_namespace=$(terraform output -state=${GITDIR}/us-west/terraform.tfstate gke_namespace)
+
+cd ${GITDIR}/us-west
+./setkubectl.sh
+
+exit 0
+

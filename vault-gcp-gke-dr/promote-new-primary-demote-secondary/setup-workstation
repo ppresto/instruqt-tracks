@@ -1,0 +1,10 @@
+#!/bin/bash -l
+# set -e
+
+GITDIR="/root/gcp-gke"
+
+# Set workdir
+set-workdir ${GITDIR}/us-west
+cd ${GITDIR}/us-west
+
+exit 0

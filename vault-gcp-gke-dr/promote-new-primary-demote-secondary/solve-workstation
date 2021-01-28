@@ -1,0 +1,77 @@
+#!/bin/bash -l
+
+# Enable bash history
+HISTFILE=/root/.bash_history
+set -o history
+
+GITDIR="/root/gcp-gke"
+
+# Set workdir
+set-workdir ${GITDIR}/us-west
+cd ${GITDIR}/us-west
+
+./setkubectl.sh
+
+
+### Create DR Operator Batch Token
+vault_promoteddr_active=$( \
+kubectl --context=usc \
+get pod --selector="vault-active=true" \
+--output=jsonpath={.items..metadata.name})
+
+kubectl --context=usc \
+exec -it ${vault_promoteddr_active} -- \
+vault token create -format=json \
+-orphan -type=batch -policy=vault-dr-token \
+| jq -r '.auth.client_token' | \
+tee /root/gcp-gke/us-central/tmp/promoted-dr-batch-token
+
+### Promote Vault DR to Primary
+vault_promoteddr_active=$(kubectl --context=usc get pod --selector="vault-active=true" --output=jsonpath={.items..metadata.name})
+
+kubectl --context=usc \
+exec -it ${vault_promoteddr_active} -- \
+vault token create -format=json \
+-orphan -type=batch -policy=vault-dr-token \
+| jq -r '.auth.client_token' | \
+tee /root/gcp-gke/us-central/tmp/promoted-dr-batch-token
+
+promote_newprimary_batch_token=$(cat /root/gcp-gke/us-central/tmp/promoted-dr-batch-token)
+
+ext_ip=$(kubectl --context=usw get svc vault-usw-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+echo "Ext IP: ${ext_ip}"
+
+vault_newprimary_active=$( \
+kubectl --context=usw \
+get pod --selector="vault-active=true" \
+--output=jsonpath={.items..metadata.name})
+
+kubectl --context=usw \
+exec -it ${vault_newprimary_active} -- \
+vault write sys/replication/dr/secondary/promote \
+dr_operation_token=${promote_newprimary_batch_token} \
+primary_cluster_addr="https://${ext_ip}:8201"
+
+kubectl --context=usw exec -ti ${vault_newprimary_active}  -- vault login $(cat ../us-west/tmp/root.token.primary.json)
+
+kubectl --context=usw exec -ti ${vault_newprimary_active} -- \
+vault write sys/replication/dr/primary/secondary-token id=new-secondary -format=json \
+| tee tmp/new-secondary-replication-token.json
+
+kubectl --context=usw \
+    exec -it ${vault_newprimary_active} -- \
+    vault token create -format=json \
+    -orphan -type=batch -policy=vault-dr-token \
+    | jq -r '.auth.client_token' | \
+    tee /root/gcp-gke/us-west/tmp/new-secondary-batch-token
+
+kubectl --context=usc exec -ti ${vault_promoteddr_active} -- \
+    vault write -f sys/replication/dr/primary/demote
+
+kubectl --context=usc exec -ti ${vault_promoteddr_active} -- \
+    vault write sys/replication/dr/secondary/update-primary \
+    dr_operation_token=$(cat /root/gcp-gke/us-west/tmp/new-secondary-batch-token) \
+    token=$(cat tmp/new-secondary-replication-token.json | jq -r '.wrap_info.token') \
+    primary_api_addr=http://${ext_ip}:8200
+
+exit 0
