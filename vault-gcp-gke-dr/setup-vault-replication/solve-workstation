@@ -6,7 +6,7 @@ set -o history
 
 GITDIR="/root/gcp-gke"
 
-cd ${GITDIR}/us-west-primary
+cd ${GITDIR}/us-west
 
 # GKE Cluster should be built already during initial setup.
 #terraform init
@@ -14,25 +14,25 @@ cd ${GITDIR}/us-west-primary
 ./setkubectl.sh
 
 # Setup Primary
-ext_ip=$(kubectl --context=primary get svc vault-primary-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+ext_ip=$(kubectl --context=usw get svc vault-usw-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
 echo "Ext IP: ${ext_ip}"
 
-kubectl exec -ti vault-primary-0 -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
+kubectl exec -ti vault-usw-0 -- vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
 
-kubectl exec -ti vault-primary-0 -- vault write sys/replication/dr/primary/secondary-token id=dr -format=json | tee ${GITDIR}/us-west-primary/tmp/secondary-token.json
+kubectl exec -ti vault-usw-0 -- vault write sys/replication/dr/primary/secondary-token id=dr -format=json | tee ${GITDIR}/us-west/tmp/secondary-token.json
 
 # Setup Secondary
 sleep 30
-cd ../us-central-dr
+cd ../us-central
 ./setkubectl.sh
 
-token=$(jq -r '.wrap_info.token' < ${GITDIR}/us-west-primary/tmp/secondary-token.json)
-kubectl exec -ti vault-dr-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
+token=$(jq -r '.wrap_info.token' < ${GITDIR}/us-west/tmp/secondary-token.json)
+kubectl exec -ti vault-usc-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
 
 sleep 30
 echo "Secondary DR Cluster Status:"
-kubectl exec -ti vault-dr-0 -- vault read sys/replication/dr/status
-echo "Secondary DR Cluster Status:"
-kubectl --context=primary exec -it vault-primary-0 -- vault read sys/replication/dr/status
+kubectl exec -ti vault-usc-0 -- vault read sys/replication/dr/status
+echo "Primary DR Cluster Status:"
+kubectl --context=usw exec -it vault-usw-0 -- vault read sys/replication/dr/status
 
 exit 0

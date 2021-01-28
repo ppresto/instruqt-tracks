@@ -4,11 +4,11 @@
 GITDIR="/root/gcp-gke"
 
 # Set workdir
-set-workdir ${GITDIR}/us-west-primary
-cd ${GITDIR}/us-west-primary
+set-workdir ${GITDIR}/us-west
+cd ${GITDIR}/us-west
 ./setkubectl.sh
 
-../scripts/uninstall_vault.sh primary
+../scripts/uninstall_vault.sh vault-usw
 
 # Create new KMS Key for New Primary.  Update terraform variables file with new name.
 sed -i "s/\(key_ring\s\+= \).*/\1\"vault-unseal-ring-new\"/" terraform.tfvars

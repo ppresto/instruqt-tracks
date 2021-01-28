@@ -7,50 +7,50 @@ set -o history
 GITDIR="/root/gcp-gke"
 
 # Set workdir
-set-workdir ${GITDIR}/us-west-primary
-cd ${GITDIR}/us-west-primary
+set-workdir ${GITDIR}/us-west
+cd ${GITDIR}/us-west
 
 ./setkubectl.sh
 
 # Run Terraform to create new KMS Keys and an updated custom vault.yaml.
 terraform apply -auto-approve
 
-helm install vault-primary hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
+helm install vault-usw hashicorp/vault -f vault.yaml -f vault-hc-helm.yaml
 
 sleep 40
-../scripts/init_vault.sh
+../scripts/init_vault.sh vault-usw
 
 ### Login to the DR cluster to setup replication to the new primary
-cd ../us-central-dr
+cd ../us-central
 ./setkubectl.sh
-kubectl exec -ti vault-dr-0 -- vault login $(jq -r '.root_token' < ../us-west-primary/tmp/cluster-keys.json)
+kubectl exec -ti vault-usc-0 -- vault login $(cat ../us-west/tmp/root.token.primary.json)
 
 #Enable replication with the DR clusters external IP
-ext_ip=$(kubectl get svc vault-dr-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
-kubectl exec -ti vault-dr-0 -- \
+ext_ip=$(kubectl get svc vault-usc-active-lb -o json | jq -r '.status.loadBalancer.ingress[].ip')
+kubectl exec -ti vault-usc-0 -- \
 echo "Enable Replication using cluster_addr=https://${ext_ip}:8201"
 vault write -f sys/replication/dr/primary/enable primary_cluster_addr=https://${ext_ip}:8201
 
-kubectl exec -ti vault-dr-0 -- \
+kubectl exec -ti vault-usc-0 -- \
 vault write sys/replication/dr/primary/secondary-token id=new-primary -format=json \
 | tee tmp/new-primary-replication-token.json
 
 ### Configure the new primary cluster as the DR.  Once replication is complete we will be able to fail back over and use our new primary.  Lets first authenticate.
-cd ../us-west-primary
+cd ../us-west
 ./setkubectl.sh
 
 #Replicate with the promoted DR using the token we just created.
-token=$(jq -r '.wrap_info.token' < ../us-central-dr/tmp/new-primary-replication-token.json)
-kubectl --context=primary exec -ti vault-primary-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
+token=$(jq -r '.wrap_info.token' < ../us-central/tmp/new-primary-replication-token.json)
+kubectl --context=usw exec -ti vault-usw-0 -- vault write sys/replication/dr/secondary/enable primary_api_addr=http://${ext_ip}:8200 token=${token}
 
 
 ### Check DR and Primary cluster replication status
-kubectl --context=dr \
-exec -ti vault-dr-0 -- \
+kubectl --context=usc \
+exec -ti vault-usc-0 -- \
 vault read sys/replication/dr/status
 
-kubectl --context=primary \
-exec -it vault-primary-0 -- \
+kubectl --context=usw \
+exec -it vault-usw-0 -- \
 vault read sys/replication/dr/status
 
 exit 0

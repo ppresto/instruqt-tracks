@@ -4,7 +4,7 @@
 GITDIR="/root/gcp-gke"
 
 # Set workdir
-set-workdir ${GITDIR}/us-central-dr
+set-workdir ${GITDIR}/us-central
 
 
 # Store our project ID as a Terraform env var
@@ -16,6 +16,6 @@ export GOOGLE_CREDENTIALS=$(echo $INSTRUQT_GCP_PROJECT_GCP_PROJECT_SERVICE_ACCOU
 grep "GOOGLE_CREDENTIALS=" /root/.bashrc || echo "export GOOGLE_CREDENTIALS=$GOOGLE_CREDENTIALS" >> /root/.bashrc
 
 # save primary cluster root key to a file
-echo $(jq -r '.root_token' < ${GITDIR}/us-west-primary/tmp/cluster-keys.json) > ${GITDIR}/us-west-primary/tmp/root.token.primary.json
+echo $(jq -r '.root_token' < ${GITDIR}/us-west/tmp/vault-usw-cluster-keys.json) > ${GITDIR}/us-west/tmp/root.token.primary.json
 exit 0
 

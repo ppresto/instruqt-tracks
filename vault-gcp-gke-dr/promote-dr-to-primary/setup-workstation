@@ -4,16 +4,16 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 GITDIR="/root/gcp-gke"
 
 # Using zone for the region in tf makes smaller GKS footprint
-gke_namespace=$(terraform output -state=${GITDIR}/us-west-primary/terraform.tfstate gke_namespace)
+gke_namespace=$(terraform output -state=${GITDIR}/us-west/terraform.tfstate gke_namespace)
 
-cd ${GITDIR}/us-west-primary
+cd ${GITDIR}/us-west
 ./setkubectl.sh
 
 export VAULT_SKIP_VERIFY=true
-export VAULT_ADDR="http://$(kubectl get svc vault-primary-ui -o json | jq -r '.status.loadBalancer.ingress[].ip'):8200"
+export VAULT_ADDR="http://$(kubectl get svc vault-usw-ui -o json | jq -r '.status.loadBalancer.ingress[].ip'):8200"
 grep "VAULT_ADDR=" /root/.bashrc || echo "export VAULT_ADDR=\"${VAULT_ADDR}\"" >> /root/.bashrc
 
-export VAULT_TOKEN="$(jq -r '.root_token' < tmp/cluster-keys.json)"
+export VAULT_TOKEN="$(jq -r '.root_token' < tmp/vault-usw-cluster-keys.json)"
 grep "VAULT_TOKEN=" /root/.bashrc || echo "export VAULT_TOKEN=\"${VAULT_TOKEN}\"" >> /root/.bashrc
 
 export TF_VAR_VAULT_ADDR=${VAULT_ADDR}
@@ -21,8 +21,8 @@ export TF_VAR_VAULT_ADDR=${VAULT_ADDR}
 export TF_VAR_VAULT_TOKEN=${VAULT_TOKEN}
 
 # Set workdir
-set-workdir ${GITDIR}/us-central-dr
-cd ${GITDIR}/us-central-dr
+set-workdir ${GITDIR}/us-central
+cd ${GITDIR}/us-central
 ./setkubectl.sh
 
 exit 0

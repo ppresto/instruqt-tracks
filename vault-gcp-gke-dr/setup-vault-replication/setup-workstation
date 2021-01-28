@@ -4,7 +4,7 @@
 GITDIR="/root/gcp-gke"
 
 # Set workdir
-set-workdir ${GITDIR}/us-west-primary
+set-workdir ${GITDIR}/us-west
 
 
 # Store our project ID as a Terraform env var
