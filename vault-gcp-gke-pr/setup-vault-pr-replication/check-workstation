@@ -7,6 +7,9 @@ if [ -f /tmp/skip-check ]; then
     exit 0
 fi
 
-kubectl --context=dr exec -ti vault-dr-0 -- vault read sys/replication/dr/status
+kubectl --context=usc \
+exec -ti vault-usc-0 -- \
+vault read sys/replication/performance/status
+
 
 exit 0
