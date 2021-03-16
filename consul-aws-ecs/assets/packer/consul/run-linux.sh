@@ -2,7 +2,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PACKER_VER=1.6.1
 CONSUL_VER=1.8.0
-RELEASE=0.0.2
+RELEASE=0.0.1
 
 # Build Latest Consul Ent Binary and update AMI Release
 #CONSUL_VER=1.9.3
@@ -45,6 +45,6 @@ AWS_REGION=${AWS_REGION} /usr/local/bin/packer build -var-file vars.json centos.
 
 # Verify Image was created with aws-cli
 
-#aws ec2 describe-images --region ${AWS_REGION} \
-#--filters "Name=tag:Owner,Values=ppresto@hashicorp.com" \
-#--query 'Images[*].[ImageId]' --output text
+aws ec2 describe-images --region ${AWS_REGION} \
+--filters "Name=tag:Owner,Values=ppresto@hashicorp.com" \
+--query 'Images[*].[ImageId]' --output text

@@ -2,7 +2,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PACKER_VER=1.5.4
 CONSUL_VER=1.8.0
-RELEASE=0.0.2
+RELEASE=0.0.1
 
 # Build Latest Consul Ent Binary and update AMI Release
 #CONSUL_VER=1.9.3
