@@ -47,12 +47,13 @@ rm -f *.zip
 mkdir -p /root/terraform
 cd /root/terraform
 echo "cloning assets..."
-git clone https://github.com/ppresto/consul-aws-ecs.git
-cp -r assets/consul .
-cp -r assets/packer ../
-cp -r assets/vpc .
-cp -r assets/ecs .
-cp -r assets/consul-ecs-agent ../
+git clone https://github.com/ppresto/instruqt-tracks.git
+cp -r instruqt-tracks/consul-aws-ecs/assets/consul .
+cp -r instruqt-tracks/consul-aws-ecs/assets/packer ../
+cp -r instruqt-tracks/consul-aws-ecs/assets/vpc .
+cp -r instruqt-tracks/consul-aws-ecs/assets/ecs .
+cp -r instruqt-tracks/consul-aws-ecs/assets/consul-ecs-agent ../
+rm -rf instruqt-tracks
 
 #provision vpc
 cd /root/terraform/vpc
@@ -62,7 +63,7 @@ echo "Provision VPC ..."
 
 # create image
 cd /root/packer/consul
-./run.sh
+./run-linux.sh
 
 aws ec2 describe-images --region ${AWS_REGION} \
 --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" \
