@@ -34,22 +34,13 @@ mv terraform /usr/local/bin/terraform
 rm -f *.zip
 cd /root
 
-#install consul
-cd /tmp
-echo "installing consul..."
-curl -O https://releases.hashicorp.com/consul/1.8.0+ent/consul_1.8.0+ent_linux_amd64.zip
-unzip *.zip
-mv consul /usr/local/bin/consul
-rm -f *.zip
-cd /root
-
 #install vault
-cd /tmp
-echo "installing vault..."
-curl -O https://releases.hashicorp.com/vault/1.6.3/vault_1.6.3_linux_amd64.zip
-unzip *.zip
-mv vault /usr/local/bin/vault
-rm -f *.zip
+#cd /tmp
+#echo "installing vault..."
+#curl -O https://releases.hashicorp.com/vault/1.6.3/vault_1.6.3_linux_amd64.zip
+#unzip *.zip
+#mv vault /usr/local/bin/vault
+#rm -f *.zip
 
 cd /root
 echo "cloning assets..."
