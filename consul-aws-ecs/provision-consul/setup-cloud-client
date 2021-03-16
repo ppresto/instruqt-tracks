@@ -1,18 +1,19 @@
 #!/bin/bash
 
-#path
-echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
+# env
+export AWS_REGION=us-west-2
 
-set-workdir /root/terraform/vpc
+# path
+echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
+echo "export AWS_REGION=${AWS_REGION}" >> ~/.bashrc
+
+set-workdir /root
 
 # wait for AWS Credentials
 sleep 10
 
-# Env
-export AWS_REGION=us-west-2
-
-# AWS CLI
-aws configure set default.region us-west-2
+# aws cli
+aws configure set default.region ${AWS_REGION}
 aws ec2 create-default-vpc
 
 #ssh
@@ -60,21 +61,20 @@ cp -r instruqt-tracks/consul-aws-ecs/assets/ecs .
 cp -r instruqt-tracks/consul-aws-ecs/assets/consul-ecs-agent .
 rm -rf instruqt-tracks
 
+# create image
+cd /root/packer/consul
+./run-linux.sh &
 
 #provision vpc
 cd /root/vpc
 echo "Provision VPC ..."
 /usr/local/bin/terraform init
-/usr/local/bin/terraform apply -auto-approve &
-
-# create image
-cd /root/packer/consul
-./run-linux.sh
+/usr/local/bin/terraform apply -auto-approve
 
 # Wait for AMI to be available
-until curl -s aws ec2 describe-images --owners self --query 'Images[*].[ImageId]' --output text; do
-echo "Waiting for AWS AMI to be available"
-sleep 1
+until aws ec2 describe-images --owners self --query 'Images[*].[ImageId]' --output text; do
+    echo "Waiting for AWS AMI to be available"
+    sleep 1
 done
 
 aws ec2 describe-images --owners self

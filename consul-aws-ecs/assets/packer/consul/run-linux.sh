@@ -1,6 +1,6 @@
 #!/bin/bash
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PACKER_VER=1.5.4
+PACKER_VER=1.6.1
 CONSUL_VER=1.8.0
 RELEASE=0.0.2
 
@@ -38,8 +38,10 @@ cat <<- EOF > vars.json
 }
 EOF
 
-AWS_REGION=$(terraform output -state=${DIR}/../../vpc/terraform.tfstate aws_region)
-AWS_REGION=${AWS_REGION} packer build -var-file vars.json centos.json
+if [[ -z ${AWS_REGION} ]]; then
+  AWS_REGION=$(/usr/local/bin/terraform output -state=${DIR}/../../vpc/terraform.tfstate aws_region)
+fi
+AWS_REGION=${AWS_REGION} /usr/local/bin/packer build -var-file vars.json centos.json -machine-readable
 
 # Verify Image was created with aws-cli
 
