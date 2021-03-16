@@ -33,7 +33,7 @@ variable "network_segments" {
 }
 
 variable "name_prefix" {
-  default     = "instruqt"
+  default     = "hashicorp"
   description = "prefix used in resource names"
 }
 
