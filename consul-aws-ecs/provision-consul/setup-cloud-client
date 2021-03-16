@@ -44,21 +44,20 @@ unzip *.zip
 mv vault /usr/local/bin/vault
 rm -f *.zip
 
-mkdir -p /root/terraform
-cd /root/terraform
+cd /root
 echo "cloning assets..."
 git clone https://github.com/ppresto/instruqt-tracks.git
 cp -r instruqt-tracks/consul-aws-ecs/assets/consul .
-cp -r instruqt-tracks/consul-aws-ecs/assets/packer ../
+cp -r instruqt-tracks/consul-aws-ecs/assets/packer .
 cp -r instruqt-tracks/consul-aws-ecs/assets/vpc .
 cp -r instruqt-tracks/consul-aws-ecs/assets/ecs .
-cp -r instruqt-tracks/consul-aws-ecs/assets/consul-ecs-agent ../
+cp -r instruqt-tracks/consul-aws-ecs/assets/consul-ecs-agent .
 rm -rf instruqt-tracks
 
 # env
 export AWS_REGION=us-west-2
 #provision vpc
-cd /root/terraform/vpc
+cd /root/vpc
 echo "Provision VPC ..."
 /usr/local/bin/terraform init
 /usr/local/bin/terraform apply -auto-approve &

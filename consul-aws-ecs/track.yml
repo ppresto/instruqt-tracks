@@ -27,7 +27,7 @@ challenges:
     Inspect the Terraform code, and then provision the Consul Cluster.
 
     ```
-    cd /root/terraform/consul
+    cd /root/consul
     terraform init
     terraform apply -auto-approve
     ```
@@ -88,7 +88,7 @@ challenges:
   - title: Code
     type: code
     hostname: cloud-client
-    path: /root/terraform/ecs
+    path: /root/ecs
   difficulty: basic
   timelimit: 300
 - slug: build-ecs-cluster
@@ -118,7 +118,7 @@ challenges:
   - title: Editor
     type: code
     hostname: cloud-client
-    path: /root/terraform/ecs
+    path: /root/ecs
   - title: Terminal
     type: terminal
     hostname: cloud-client
