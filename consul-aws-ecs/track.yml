@@ -53,7 +53,7 @@ challenges:
     hostname: cloud-client
     path: /root/terraform
   difficulty: basic
-  timelimit: 1200
+  timelimit: 1800
 - slug: build-consul-ecs-agent
   id: dmteuxtrwst0
   type: challenge
@@ -90,7 +90,7 @@ challenges:
     hostname: cloud-client
     path: /root/ecs
   difficulty: basic
-  timelimit: 300
+  timelimit: 1800
 - slug: build-ecs-cluster
   id: vdd2lma8ryhh
   type: challenge
@@ -128,7 +128,7 @@ challenges:
     path: /
     port: 80
   difficulty: basic
-  timelimit: 1200
+  timelimit: 1800
 - slug: sandbox
   id: abnujsmdzczv
   type: challenge
@@ -152,5 +152,5 @@ challenges:
     path: /
     port: 80
   difficulty: basic
-  timelimit: 1200
-checksum: "15966191762149141066"
+  timelimit: 1800
+checksum: "7699668972107545171"

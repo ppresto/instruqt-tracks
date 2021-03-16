@@ -38,7 +38,7 @@ cat <<- EOF > vars.json
 }
 EOF
 
-AWS_REGION=$(terraform output -state=${DIR}/../ecs/terraform.tfstate aws_region)
+AWS_REGION=$(terraform output -state=${DIR}/../../vpc/terraform.tfstate aws_region)
 AWS_REGION=${AWS_REGION} packer build -var-file vars.json centos.json
 
 # Verify Image was created with aws-cli

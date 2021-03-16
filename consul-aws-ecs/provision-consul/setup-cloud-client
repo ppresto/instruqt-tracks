@@ -5,7 +5,13 @@ echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
 
 set-workdir /root/terraform/vpc
 
-#sleep 10
+# wait for AWS Credentials
+sleep 10
+
+# Env
+export AWS_REGION=us-west-2
+
+# AWS CLI
 aws configure set default.region us-west-2
 aws ec2 create-default-vpc
 
@@ -54,8 +60,7 @@ cp -r instruqt-tracks/consul-aws-ecs/assets/ecs .
 cp -r instruqt-tracks/consul-aws-ecs/assets/consul-ecs-agent .
 rm -rf instruqt-tracks
 
-# env
-export AWS_REGION=us-west-2
+
 #provision vpc
 cd /root/vpc
 echo "Provision VPC ..."
@@ -66,8 +71,12 @@ echo "Provision VPC ..."
 cd /root/packer/consul
 ./run-linux.sh
 
-aws ec2 describe-images --region ${AWS_REGION} \
---filters "Name=tag:Owner,Values=ppresto@hashicorp.com" \
---output text
+# Wait for AMI to be available
+until curl -s aws ec2 describe-images --owners self --query 'Images[*].[ImageId]' --output text; do
+echo "Waiting for AWS AMI to be available"
+sleep 1
+done
+
+aws ec2 describe-images --owners self
 
 exit 0
