@@ -55,6 +55,8 @@ cp -r instruqt-tracks/consul-aws-ecs/assets/ecs .
 cp -r instruqt-tracks/consul-aws-ecs/assets/consul-ecs-agent ../
 rm -rf instruqt-tracks
 
+# env
+export AWS_REGION=us-west-2
 #provision vpc
 cd /root/terraform/vpc
 echo "Provision VPC ..."
