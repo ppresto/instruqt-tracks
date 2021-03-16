@@ -63,7 +63,7 @@ rm -rf instruqt-tracks
 
 # create image
 cd /root/packer/consul
-./run-linux.sh &
+./run-linux.sh > packer.out &
 
 #provision vpc
 cd /root/vpc

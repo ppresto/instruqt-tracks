@@ -32,6 +32,11 @@ variable "network_segments" {
   default     = {}
 }
 
+variable "name_prefix" {
+  default     = "instruqt"
+  description = "prefix used in resource names"
+}
+
 variable "key_name" {
   description  = "SSH Key Name to use for all instances"
   default      = "ppresto-ptfe-dev-key"

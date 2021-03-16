@@ -51,7 +51,7 @@ challenges:
   - title: Terraform
     type: code
     hostname: cloud-client
-    path: /root/terraform
+    path: /root
   difficulty: basic
   timelimit: 1800
 - slug: build-consul-ecs-agent
