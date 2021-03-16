@@ -41,6 +41,11 @@ EOF
 if [[ -z ${AWS_REGION} ]]; then
   AWS_REGION=$(/usr/local/bin/terraform output -state=${DIR}/../../vpc/terraform.tfstate aws_region)
 fi
+
+until cat vars.json | grep "owner"; do
+    echo "Waiting for vars.json to be created"
+    sleep 1
+done
 AWS_REGION=${AWS_REGION} /usr/local/bin/packer build -var-file vars.json centos.json -machine-readable
 
 # Verify Image was created with aws-cli
