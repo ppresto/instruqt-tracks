@@ -1,0 +1,16 @@
+{
+  "service": {
+    "name": "",
+    "id": "",
+    "token": "",
+    "address": "",
+    "port": 0,
+    "check": {
+      "http": "",
+      "method": "GET",
+      "interval": "",
+      "timeout": "",
+      "DeregisterCriticalServiceAfter": "1m"
+    }
+  }
+}

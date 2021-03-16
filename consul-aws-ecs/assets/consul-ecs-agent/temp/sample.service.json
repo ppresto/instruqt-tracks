@@ -1,0 +1,26 @@
+{
+  "service": {
+    "name": "http-kv",
+    "id": "http-kv",
+    "token": "",
+    "address": "CONTAINER_IP",
+    "port": 80,
+    "tags": [
+      "ecs",
+      "http-kv",
+      "dev"
+    ],
+    "meta": {
+      {{ range tree "meta" }}
+      "{{ .Key }}":"{{ .Value }}",
+      {{ end }}
+      "meta":"auto-generated-v1"
+    },
+    "check": {
+      "http": "http://CONTAINER_IP:80/",
+      "method": "GET",
+      "interval": "5s",
+      "timeout": "1s"
+    }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "containerDefinitions": [
+    {
+      "portMappings": [
+        {
+          "hostPort": 8301,
+          "protocol": "tcp",
+          "containerPort": 8301
+        },
+        {
+          "hostPort": 8301,
+          "protocol": "udp",
+          "containerPort": 8301
+        },
+        {
+          "hostPort": 8302,
+          "protocol": "tcp",
+          "containerPort": 8302
+        },
+        {
+          "hostPort": 8300,
+          "protocol": "tcp",
+          "containerPort": 8300
+        },
+        {
+          "hostPort": 8600,
+          "protocol": "tcp",
+          "containerPort": 8600
+        },
+        {
+          "hostPort": 8600,
+          "protocol": "udp",
+          "containerPort": 8600
+        },
+        {
+          "hostPort": 8501,
+          "protocol": "tcp",
+          "containerPort": 8501
+        },
+        {
+          "hostPort": 8502,
+          "protocol": "tcp",
+          "containerPort": 8502
+        }
+      ],
+      "cpu": 10,
+      "environment": [
+        {
+          "name": "CONSUL_DATACENTER",
+          "value": "us-west-2"
+        },
+        {
+          "name": "CONSUL_CLIENT",
+          "value": "true"
+        }
+      ],
+      "memory": 100,
+      "image": "joatmon08/consul-ecs:v1.9.3-v1.16.0",
+      "name": "consul-client"
+    }
+  ],
+  "taskRoleArn": "arn:aws:iam::711129375688:role/ecs-vpc-presto-ec2-role20210224210646000200000001",
+  "family": "consul-client",
+  "requiresCompatibilities": [
+    "EC2"
+  ],
+  "networkMode": "host"
+}

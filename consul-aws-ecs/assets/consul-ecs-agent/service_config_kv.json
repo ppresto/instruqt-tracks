@@ -1,0 +1,15 @@
+{
+    "service": {
+      "name": "http",
+      "id": "http",
+      "token": "",
+      "address": "",
+      "port": "",
+      "check": {
+        "http": "",
+        "method": "GET",
+        "interval": "5",
+        "timeout": "1"
+      }
+    }
+  }

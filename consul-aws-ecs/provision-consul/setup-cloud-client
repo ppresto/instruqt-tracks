@@ -1,0 +1,71 @@
+#!/bin/bash
+
+#path
+echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
+
+set-workdir /root/terraform/vpc
+
+#sleep 10
+aws configure set default.region us-west-2
+aws ec2 create-default-vpc
+
+#ssh
+aws ec2 import-key-pair --key-name "instruqt" --public-key-material file://~/.ssh/id_rsa.pub
+eval `ssh-agent -s`
+
+cat << EOF > ~/.ssh/config
+Host *
+    StrictHostKeyChecking no
+EOF
+
+#install terraform
+cd /tmp
+echo "installing terraform..."
+curl -O https://releases.hashicorp.com/terraform/0.13.5/terraform_0.13.5_linux_amd64.zip
+unzip *.zip
+mv terraform /usr/local/bin/terraform
+rm -f *.zip
+cd /root
+
+#install consul
+cd /tmp
+echo "installing consul..."
+curl -O https://releases.hashicorp.com/consul/1.8.0+ent/consul_1.8.0+ent_linux_amd64.zip
+unzip *.zip
+mv consul /usr/local/bin/consul
+rm -f *.zip
+cd /root
+
+#install vault
+cd /tmp
+echo "installing vault..."
+curl -O https://releases.hashicorp.com/vault/1.6.3/vault_1.6.3_linux_amd64.zip
+unzip *.zip
+mv vault /usr/local/bin/vault
+rm -f *.zip
+
+mkdir -p /root/terraform
+cd /root/terraform
+echo "cloning assets..."
+git clone https://github.com/ppresto/consul-aws-ecs.git
+cp -r assets/consul .
+cp -r assets/packer ../
+cp -r assets/vpc .
+cp -r assets/ecs .
+cp -r assets/consul-ecs-agent ../
+
+#provision vpc
+cd /root/terraform/vpc
+echo "Provision VPC ..."
+/usr/local/bin/terraform init
+/usr/local/bin/terraform apply -auto-approve &
+
+# create image
+cd /root/packer/consul
+./run.sh
+
+aws ec2 describe-images --region ${AWS_REGION} \
+--filters "Name=tag:Owner,Values=ppresto@hashicorp.com" \
+--output text
+
+exit 0

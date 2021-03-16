@@ -1,0 +1,10 @@
+# Test Immutable Upgrade with new consul version
+aws_region = "us-west-2"
+consul_nodes = 3
+bootstrap = false
+
+#increment cluster version based on change.
+consul_cluster_version = "0.0.2"
+
+#increment ami version if applicable
+ami_release = "0.0.2"

@@ -1,0 +1,6 @@
+resource "aws_ecr_repository" "http" {
+    name  = "http"
+    tags = {
+      name = "ecr-http"
+    }
+}

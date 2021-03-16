@@ -1,0 +1,60 @@
+
+# ECS default policy to to deny incoming requests
+# ???
+resource "aws_security_group" "ecs_cluster" {
+  name        = "allow_alb_to_ecs"
+  description = "Allow ECS services to accept all traffic from ALB"
+  vpc_id =  data.terraform_remote_state.vpc.outputs.vpc_id
+  ingress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    # Only allowing traffic in from the load balancer security group
+    security_groups = ["${module.ecs-cluster.sg_ecs_id}"]
+  }
+
+  egress {
+    from_port   = 0 # Allowing any incoming port
+    to_port     = 0 # Allowing any outgoing port
+    protocol    = "-1" # Allowing any outgoing protocol 
+    cidr_blocks = ["0.0.0.0/0"] # Allowing traffic out to all IP addresses
+  }
+}
+
+resource "aws_alb" "application_load_balancer" {
+  name               = "test-lb-tf" # Naming our load balancer
+  load_balancer_type = "application"
+  subnets = data.terraform_remote_state.vpc.outputs.public_subnets
+  # Referencing the security group
+  security_groups = ["${module.ecs-cluster.sg_ecs_id}"]
+}
+
+resource "aws_lb_target_group" "ecs_tg" {
+  name        = "ecs-target-group"
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
+  health_check {
+    matcher = "200,301,302"
+    path = "/"
+    #healthy_threshold   = "3"
+    #interval            = "10"
+    #protocol            = "HTTP"
+    #unhealthy_threshold = "3"
+  }
+}
+
+resource "aws_lb_listener" "listener" {
+  load_balancer_arn = "${aws_alb.application_load_balancer.arn}" # Referencing our load balancer
+  port              = "80"
+  protocol          = "HTTP"
+  default_action {
+    type             = "forward"
+    target_group_arn = "${aws_lb_target_group.ecs_tg.arn}" # Referencing our tagrte group
+  }
+}
+
+output "ecs_alb_url" {
+  value = aws_alb.application_load_balancer.dns_name
+}

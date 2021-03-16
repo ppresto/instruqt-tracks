@@ -1,0 +1,9 @@
+#!/bin/bash
+
+#path
+echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
+
+set-workdir /root/consul-ecs-agent
+
+
+exit 0
