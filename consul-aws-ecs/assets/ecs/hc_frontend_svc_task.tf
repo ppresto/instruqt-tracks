@@ -37,7 +37,7 @@ resource "aws_ecs_task_definition" "svc_hc_frontend" {
       "cpu": 256
     },
     {
-      "image": "ppresto/consul-ecs:1.9.3-1.16.0-5",
+      "image": "${var.consul_ecs_agent_image_name}",
       "name": "svc_hc_frontend-init",
       "essential": false,
       "logConfiguration": {

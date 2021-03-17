@@ -17,12 +17,8 @@ data "aws_availability_zones" "available" {
 
 module "consul" {
   source = "./modules/is-immutable-aws-consul"
-
-  ami_owner     = "ppresto@hashicorp.com"
+  ami_owner     = var.ami_owner
   instance_type = "t3.large"
-
-  # Testing new release
-  #ami_release   = "0.0.1"
   ami_release   = var.ami_release
   consul_cluster_version = var.consul_cluster_version
   bootstrap              = var.bootstrap
@@ -35,7 +31,6 @@ module "consul" {
   subnets     = data.terraform_remote_state.vpc.outputs.public_subnets
 
   region      = var.aws_region
-  #availability_zones = "us-east-1a,us-east-1b,us-east-1c"
   availability_zones = [
     data.aws_availability_zones.available.names[0],
     data.aws_availability_zones.available.names[1],
@@ -48,8 +43,8 @@ module "consul" {
   redundancy_zones = false
   performance_mode = false
   enable_snapshots = true
-
-  owner = "ppresto@hashicorp.com"
+  # This is the owner tag on EC2 instance
+  owner = var.ami_owner
   ttl   = "-1"
 
   additional_security_group_ids = [aws_security_group.consul_ssh.id, aws_security_group.consul_lb.id]

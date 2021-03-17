@@ -1,5 +1,6 @@
 BUILD_ID := $(shell git rev-parse --short HEAD 2>/dev/null || echo no-commit-id)
-IMAGE_NAME := ppresto/consul-ecs
+DOCKER_ID := ppresto
+IMAGE_NAME := ${DOCKER_ID}/consul-ecs
 ENVOY_VERSION := 1.16.0
 CONSUL_VERSION := 1.9.3
 PATCH_VERSION := 5

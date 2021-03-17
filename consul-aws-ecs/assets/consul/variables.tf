@@ -16,6 +16,10 @@ variable "ami_release" {
   default = "0.0.1"
 }
 
+variable "ami_owner" {
+  description = "AMI owner to target in the filter"
+}
+
 variable "bootstrap" {
   type        = bool
   description = "Initial bootstrap configurations"
