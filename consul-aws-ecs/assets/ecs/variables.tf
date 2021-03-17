@@ -3,10 +3,15 @@ variable "aws_region" {
   description = "The AWS region where to launch the cluster and releated resources"
 }
 
-variable "create_vpc" {
-  default     = true
-  description = "Create a new VPC for ECS"
+variable "ssh_key_name" {
+  description = "SSH key to use to enter and manage the EC2 instances within the cluster. Optional"
+  default     = "ppresto-ptfe-dev-key"
 }
+
+#variable "create_vpc" {
+#  default     = true
+#  description = "Create a new VPC for ECS"
+#}
 
 variable "cluster_name" {
   default     = "ecs-presto"

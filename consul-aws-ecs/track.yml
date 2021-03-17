@@ -19,21 +19,37 @@ challenges:
   type: challenge
   title: 'Infrastructure: Use Terraform to provision the Consul, & ECS Cluster'
   teaser: Create Consul and ECS Cluster with Terraform
-  assignment: "You can think of the Cloud CLI terminal as your laptop machine preloaded
-    with your AWS access credentials. <br>\nAt any time you can use the AWS CLI and
-    console to view your environment. <br>\n\nLets start by verifying our default
-    and custom VPC's (10.0.0.0/16).\n```\naws ec2 describe-vpcs | jq -r '.Vpcs[].CidrBlock'\n```\n\nNext,
-    make sure the immutable image we created in the background is available.  Terraform
-    will use this image in the next step.\n```\naws ec2 describe-images --region ${AWS_REGION}
-    \\\n--filters \"Name=tag:Owner,Values=ppresto@hashicorp.com\" \\\n--output text\n```\n\n#
-    Provision Consul\nLets use Terraform to provision a NLB, and ASG using the immutable
-    packer image above so we can support now downtime changes and upgrades.\n```\ncd
-    /root/consul\nterraform init\nterraform apply -auto-approve\n```\nWhile Terraform
-    is provisiong this infrastructure lets take a look at the `terraform` tab and
-    inspect /root/consul. <br>\n\nYou should see green terraform outputs if everything
-    builds successfully.  Copy the `dns_name` value\nand put this into a new browser
+  assignment: |-
+    You can think of the Cloud CLI terminal as your laptop machine preloaded
+    with your AWS access credentials. <br>
+    At any time you can use the AWS CLI and console to view your environment. <br>\n\nLets start by verifying our default
+    and custom VPC's (10.0.0.0/16).
+    ```
+    aws ec2 describe-vpcs | jq -r '.Vpcs[].CidrBlock'
+    ```
+
+    Next, make sure the immutable image we created in the background is available.  Terraform
+    will use this image in the next step.
+    ```
+    aws ec2 describe-images --region ${AWS_REGION} \
+    --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" \
+    --output text
+    ```
+
+    #Provision Consul
+    Lets use Terraform to provision a NLB, and ASG using the immutable
+    packer image above so we can support now downtime changes and upgrades.
+    ```
+    cd /root/consul
+    terraform init
+    terraform apply -auto-approve
+    ```
+    While Terraform is provisiong this infrastructure lets take a look at the `terraform` tab and
+    inspect /root/consul. <br>
+
+    You should see green terraform outputs if everything builds successfully.  Copy the `dns_name` value and put this into a new browser
     tab to access the consul UI.  You should see the consul and snapshot services
-    \nalong with an ec2 bastion host that consul discovered."
+    along with an ec2 bastion host that consul discovered.
   notes:
   - type: text
     contents: |-
@@ -54,7 +70,7 @@ challenges:
   - title: Terraform
     type: code
     hostname: cloud-client
-    path: /root
+    path: /root/consul
   difficulty: basic
   timelimit: 1800
 - slug: build-consul-ecs-agent
@@ -73,10 +89,20 @@ challenges:
     vi Makefile
     ```
 
-    Go to the `Terminal` tab to build and push your new image
+    # Docker Login
+    Go to the `Terminal` tab  and login to your dockerhub account.
+    ```
+    docker login
+    ```
+
+    # Build and Push Image
     ```
     make build
     make push
+    ```
+    *Note*: Copy your full image name for the next challenge.
+    ```
+    docker images --format "table {{.Repository}}:{{.Tag}}" | grep consul-ecs
     ```
   notes:
   - type: text
@@ -159,4 +185,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "1276512918541373246"
+checksum: "8915654857801574354"

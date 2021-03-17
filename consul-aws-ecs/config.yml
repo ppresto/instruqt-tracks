@@ -11,12 +11,11 @@ containers:
 virtualmachines:
 - name: vm
   image: debian-9
-  machine_type: g1-small
-  pool_size: 1
   shell: /bin/bash
   environment:
-    ENV_VAR: value
     ANOTHER: one
+    ENV_VAR: value
+  machine_type: g1-small
 aws_accounts:
 - name: consul
   managed_policies:

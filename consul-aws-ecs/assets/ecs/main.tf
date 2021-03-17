@@ -3,6 +3,7 @@ module "ecs-cluster" {
 
   cluster_name = var.cluster_name
   aws_region = var.aws_region
+  ssh_key_name = var.ssh_key_name
   additional_security_group_ids = [data.terraform_remote_state.consul.outputs.consul_sg]
   ecs_ec2_user_data = templatefile("${path.module}/templates/ecs-ec2-init.sh", {cluster_name = var.cluster_name})
 
