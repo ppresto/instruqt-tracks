@@ -8,7 +8,17 @@ containers:
   - 8200
   - 8500
   - 8080
+virtualmachines:
+- name: vm
+  image: debian-9
+  machine_type: g1-small
+  pool_size: 1
+  shell: /bin/bash
+  environment:
+    ENV_VAR: value
+    ANOTHER: one
 aws_accounts:
 - name: consul
   managed_policies:
   - arn:aws:iam::aws:policy/AdministratorAccess
+  - arn:aws:iam::aws:policy/PowerUserAccess

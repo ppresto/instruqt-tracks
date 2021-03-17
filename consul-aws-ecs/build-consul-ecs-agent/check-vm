@@ -5,4 +5,8 @@ if [ -f /tmp/skip-check ]; then
     exit 0
 fi
 
+if [[ $(docker images | wc -l) -le 1 ]]; then
+    exit 1
+fi
+
 exit 0

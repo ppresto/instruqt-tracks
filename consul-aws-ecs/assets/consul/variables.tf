@@ -49,10 +49,10 @@ variable "key_name" {
 variable "consul_ui_cidr_block" {
   description  = "Limit Ext UI Access to the following CIDR block"
   #default      = ["0.0.0.0/0"]
-  default      = ["52.119.127.230/32"]
+  default      = ["0.0.0.0/0"]
 }
 variable "ssh_cidr_block" {
   description  = "Limit Ext UI Access to the following CIDR block"
   #default      = ["0.0.0.0/0"]
-  default      = ["52.119.127.230/32"]
+  default      = ["0.0.0.0/0"]
 }

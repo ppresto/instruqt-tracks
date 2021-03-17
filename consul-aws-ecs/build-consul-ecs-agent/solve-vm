@@ -3,7 +3,7 @@
 #sleep for creds
 #sleep 120
 
-cd /root/consul-ecs-agent
+cd /tmp/consul-ecs-agent
 make build
 make push
 
