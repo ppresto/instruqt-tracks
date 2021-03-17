@@ -29,8 +29,8 @@ module "consul" {
 
   enable_connect = true
 
-  key_name    = "ppresto-ptfe-dev-key"
-  name_prefix = "ppresto"
+  key_name    = var.key_name
+  name_prefix = var.name_prefix
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
   subnets     = data.terraform_remote_state.vpc.outputs.public_subnets
 

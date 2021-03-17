@@ -50,6 +50,7 @@ AWS_REGION=${AWS_REGION} /usr/local/bin/packer build -var-file vars.json centos.
 
 # Verify Image was created with aws-cli
 
-aws ec2 describe-images --region ${AWS_REGION} \
---filters "Name=tag:Owner,Values=ppresto@hashicorp.com" \
---query 'Images[*].[ImageId]' --output text
+until aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --query 'Images[*].[ImageId]' --output text: do
+  echo "Waiting for AMI to be searchable by Tags"
+  sleep 1
+done
