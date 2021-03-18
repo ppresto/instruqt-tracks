@@ -18,7 +18,8 @@ challenges:
   id: uyjxdvqk2pbc
   type: challenge
   title: Provision infrastructure with Terraform
-  teaser: Create an immutable Consul environment using Packer and Terraform
+  teaser: Create an immutable Consul architecture using Packer and Terraform to provision
+    a VPC, NLB, and ASG.
   assignment: |-
     You can think of the Cloud CLI terminal as your laptop machine preloaded
     with your AWS access credentials. <br>
@@ -32,7 +33,7 @@ challenges:
     You can review the terraform code for this vpc in /root/vpc if you want.
 
     Next, make sure the packer AMI image we created in the background is available.  Terraform
-    will use this in the next step.  This can sometimes take a minute so try again if you dont get a response initially.
+    will use this in the launch configuration of the ASG.  This AMI can sometimes take a minute so try again if you dont get a response initially.
     ```
     aws ec2 describe-images --region ${AWS_REGION} \
     --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" \
@@ -40,18 +41,19 @@ challenges:
     ```
     *Note*: This image enables us to have an immutable design.
     Consul autopilot is an Enterprise feature that will allow us to deploy new consul nodes
-    with an updated AMI or configuration and once the new cluster has replicated all data
-    and considered healthy autopilot will drain the old nodes.  This enables us to make changes
-    or upgrades to consul with no downtime.
+    with an updated AMI or just a standard configuration update and once the new cluster nodes have replicated all data
+    and considered healthy autopilot will safely drain the old nodes.  This enables us to make changes
+    or upgrades to consul with no downtime just like a blue/green deployment.
 
     For additional details reference:
     ```
     /root/packer/consul
     /root/packer/consul/run-linux.sh
     ```
+    If you're new to Packer its 100% open source.  Take a look at https://www.packer.io/
 
     # Provision Consul
-    Lets use Terraform to provision a NLB, and ASG using the immutable
+    Use Terraform to provision a NLB, and ASG using the immutable
     packer image above so we can support now downtime changes and upgrades.
     ```
     cd /root/consul
@@ -59,10 +61,10 @@ challenges:
     terraform apply -auto-approve
     ```
     While Terraform is provisiong this infrastructure lets take a look at the `terraform` tab and
-    review `main.tf`. This code is leveraging our implementation services team's terraform module.<br>
+    review `main.tf`. This code is leveraging our implementation services team's terraform module.
 
-    # Load Consul UI in Browser
-    Copy the `dns_name` value from the terraform outputs and put this into a new browser tab to access the consul UI.
+    # Load the Consul UI
+    Copy the `dns_name` value from the terraform outputs and put this into a new browser tab to see the consul UI.
     ```
     terraform output dns_name
     ```
@@ -74,7 +76,7 @@ challenges:
     ```
     terraform output ec2_ip
     ```
-    Review the following configurations:
+    Review the following configurations to see how easy you can add ec2 services to consul
     * Consul Systemd: /etc/systemd/system/consul.service
     * Consul Client: /etc/consul.d/consul.hcl
     * Consul Service Definition: /etc/consul.d/ec2-bastion-svc.json
@@ -82,23 +84,23 @@ challenges:
   - type: text
     contents: |-
       In this assignment you will familiarize yourself with the AWS cloud
-      environment, and provision consul.
+      environment, and provision a consul server using Hashicorp best practices.
   tabs:
-  - title: Cloud CLI
+  - title: Terminal
     type: terminal
     hostname: cloud-client
-  - title: Cloud Consoles
+  - title: Code
+    type: code
+    hostname: cloud-client
+    path: /root/consul
+  - title: Architecture
+    type: website
+    url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-consul.html
+  - title: AWS Console
     type: service
     hostname: cloud-client
     path: /
     port: 80
-  - title: Current lab setup
-    type: website
-    url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/master/consul-aws-ecs/assets/diagrams/03-provision-consul.html
-  - title: Terraform
-    type: code
-    hostname: cloud-client
-    path: /root/consul
   difficulty: basic
   timelimit: 1800
 - slug: build-consul-ecs-agent
@@ -141,18 +143,18 @@ challenges:
     contents: In this challenge you will build an init/sidecar image used to register
       services to consul.
   tabs:
-  - title: Docker
+  - title: Terminal
     type: terminal
     hostname: vm
-  - title: Cloud Consoles
-    type: service
-    hostname: cloud-client
-    path: /
-    port: 80
   - title: Code
     type: code
     hostname: vm
     path: /root/consul-ecs-agent
+  - title: AWS Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
   difficulty: basic
   timelimit: 1800
 - slug: build-ecs-cluster
@@ -205,17 +207,17 @@ challenges:
     type: code
     hostname: cloud-client
     path: /root/ecs
-  - title: Cloud Consoles
+  - title: Architecture
+    type: website
+    url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-consul-ecs-ec2.html
+  - title: AWS Console
     type: service
     hostname: cloud-client
     path: /
     port: 80
-  - title: Docker
+  - title: Docker-Term
     type: terminal
     hostname: vm
-  - title: ECS Design
-    type: website
-    url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-ecs-ec2.html
   difficulty: basic
   timelimit: 1800
 - slug: sandbox
@@ -242,4 +244,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "5803082232893568270"
+checksum: "2201015341039429501"
