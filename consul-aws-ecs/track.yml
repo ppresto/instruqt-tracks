@@ -24,21 +24,31 @@ challenges:
     with your AWS access credentials. <br>
     At any time you can use the AWS CLI and console to view your environment. <br>
 
+    # Validate Environment
     During startup we pre-built a default and custom VPC (10.0.0.0/16) to speed things up.  Lets verify it was built properly.
     ```
     aws ec2 describe-vpcs | jq -r '.Vpcs[].CidrBlock'
     ```
     You can review the terraform code for this vpc in /root/vpc if you want.
 
-    Next, make sure the immutable image we created in the background is available.  Terraform
-    will use this image in the next step.
+    Next, make sure the packer AMI image we created in the background is available.  Terraform
+    will use this in the next step.  This can sometimes take a minute so try again if you dont get a response initially.
     ```
     aws ec2 describe-images --region ${AWS_REGION} \
     --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" \
     --output text
     ```
-    This image was created using Packer.  Review this for additional details:
-    `/root/packer/consul/run-linux.sh`.
+    *Note*: This image enables us to have an immutable design.
+    Consul autopilot is an Enterprise feature that will allow us to deploy new consul nodes
+    with an updated AMI or configuration and once the new cluster has replicated all data
+    and considered healthy autopilot will drain the old nodes.  This enables us to make changes
+    or upgrades to consul with no downtime.
+
+    For additional details reference:
+    ```
+    /root/packer/consul
+    /root/packer/consul/run-linux.sh
+    ```
 
     # Provision Consul
     Lets use Terraform to provision a NLB, and ASG using the immutable
@@ -49,17 +59,25 @@ challenges:
     terraform apply -auto-approve
     ```
     While Terraform is provisiong this infrastructure lets take a look at the `terraform` tab and
-    review `main.tf`. <br>
+    review `main.tf`. This code is leveraging our implementation services team's terraform module.<br>
 
-    You should see green terraform outputs if everything builds successfully.  Copy the `dns_name` value and put this into a new browser
-    tab to access the consul UI.
+    # Load Consul UI in Browser
+    Copy the `dns_name` value from the terraform outputs and put this into a new browser tab to access the consul UI.
     ```
     terraform output dns_name
     ```
-    `Note`: The UI shows consul and snapshot services
+    The UI shows consul and snapshot services
     along with an ec2 bastion host that consul discovered
-    The ssh details to the host are available in the terraform output
-    if you want to review the client configuration.
+
+    # EC2 Consul Client Example
+    The full ssh command to connect the ec2 bastion host is available in the terraform output.  Copy this output to SSH to the bastion host and review its configuration.
+    ```
+    terraform output ec2_ip
+    ```
+    Review the following configurations:
+    * Consul Systemd: /etc/systemd/system/consul.service
+    * Consul Client: /etc/consul.d/consul.hcl
+    * Consul Service Definition: /etc/consul.d/ec2-bastion-svc.json
   notes:
   - type: text
     contents: |-
@@ -107,7 +125,14 @@ challenges:
     make build
     make push
     ```
-    *Note*: Copy your full image REPOSITORY:TAG for the next challenge.
+
+    # entrypoint.sh
+    While the image is being built go to the Code tab
+    and take a look at `entrypoint.sh` to see how new services will be registered.
+    * Line: 218 - set_service_configuration()
+
+    # Copy image REPOSITORY:TAG
+    Copy the full image name because we need this for the next challenge.
     ```
     docker images --format "table {{.Repository}}:{{.Tag}}" | grep -v envoyproxy
     ```
@@ -137,11 +162,14 @@ challenges:
   teaser: Use Terraform to provision an ECS Cluster and deploy Hashicups micro-servies
   assignment: |-
     # my.auto.tfvars
-    In the Code tab verify `my.auto.tfvars` is setting consul_ecs_agent_image_name
-    to your image repository:tag name.  If you forgot this go to the docker tab and run "docker images".
-    Optionally, modify your cluster_name.
+    In the Code tab verify `my.auto.tfvars`
+    * consul_ecs_agent_image_name=<YOUR_DOCKER_REPOSITORY:TAG>
+    * cluster_name=<OPTIONAL_CUSTOM_NAME>
+
+    If you forgot your docker repo:tag go to the docker tab and run "docker images" to gather that information.
 
     # Provision the ECS Cluster
+    Go to the Terminal tab and execute the following
     ```
     terraform init
     terraform apply -auto-approve
@@ -185,6 +213,9 @@ challenges:
   - title: Docker
     type: terminal
     hostname: vm
+  - title: ECS Design
+    type: website
+    url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-ecs-ec2.html
   difficulty: basic
   timelimit: 1800
 - slug: sandbox
@@ -211,4 +242,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "14356540405184356325"
+checksum: "5803082232893568270"
