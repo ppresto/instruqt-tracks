@@ -1,25 +1,38 @@
 slug: consul-aws-ecs-poc
 id: enlpvazu1tqe
 type: track
-title: Consul Enterprise on AWS
-teaser: Use Consul's central service registry and discovery for services on ECS EC2.
-description: In this track you will set up a Consul shared service on AWS, and connect
-  EC2 and ECS applications.
+title: POV Shutterfly - Consul on AWS
+teaser: Use Consul's central service registry and discovery for services running on
+  ECS and EC2.
+description: |-
+  You will use Terraform to automatically setup a VPC, and NLB + ASG managed Consul Enterprise cluster
+  using Hashicorp best practices.
+
+  Then using your docker account, build a single sidecar container that can
+  support both Consul service discovery and service mesh with envoy.
+
+  All services will be registered with general service and dynamic runtime metadata.
+
+  Finally using Terraform you will provision an ASG managed ECS cluster
+  and deploy Hashicups (4 microservices) via ECS Tasks.
+
+  The frontend service with be automatically available through an ALB.
+  All microservices will be configured to leverage Consul's DNS interface to discover and route east/west traffic.
 icon: https://storage.googleapis.com/instruqt-frontend/assets/hashicorp/tracks/consul.png
 tags: []
 owner: hashicorp
 developers:
 - ppresto@hashicorp.com
 private: true
-published: false
+published: true
 show_timer: true
 challenges:
 - slug: provision-consul
   id: uyjxdvqk2pbc
   type: challenge
   title: Provision infrastructure with Terraform
-  teaser: Create an immutable Consul architecture using Packer and Terraform to provision
-    a VPC, NLB, and ASG.
+  teaser: Create an immutable Consul architecture from scratch.  Using Packer and
+    Terraform provision a VPC, NLB, and ASG to automatically manage the Consul cluster.
   assignment: |-
     You can think of the Cloud CLI terminal as your laptop machine preloaded
     with your AWS access credentials. <br>
@@ -106,8 +119,9 @@ challenges:
 - slug: build-consul-ecs-agent
   id: dmteuxtrwst0
   type: challenge
-  title: Build Consul service registration image
-  teaser: To register our ECS services we need to use an init docker container
+  title: Build a Consul service registration sidecar container
+  teaser: Build a sidecar container that can support both service discovery and service
+    mesh with envoy if needed.
   assignment: |-
     To host this container you will need a [dockerhub account](https://hub.docker.com/).
     If you dont already have one sign up for a free account now. <br>
@@ -161,14 +175,14 @@ challenges:
   id: vdd2lma8ryhh
   type: challenge
   title: Provision ECS Cluster on EC2
-  teaser: Use Terraform to provision an ECS Cluster and deploy Hashicups micro-servies
+  teaser: Use Terraform to provision an ECS Cluster and deploy Hashicups
   assignment: |-
     # my.auto.tfvars
     In the Code tab verify `my.auto.tfvars`
     * consul_ecs_agent_image_name=<YOUR_DOCKER_REPOSITORY:TAG>
     * cluster_name=<OPTIONAL_CUSTOM_NAME>
 
-    If you forgot your docker repo:tag go to the docker tab and run "docker images" to gather that information.
+    If you forgot your docker repo:tag you can go to the Docker-Term tab and run `docker images` to gather that information.
 
     # Provision the ECS Cluster
     Go to the Terminal tab and execute the following
@@ -225,23 +239,56 @@ challenges:
   type: challenge
   title: Consul Sanbox
   teaser: Use this sandbox to test various Consul use cases.
-  assignment: Please go back and stop the track once you are done to free up resources.
+  assignment: |-
+    To make Docker changes to the sidecar container use the Docker-Term an Docker-Code tabs.
+
+    To make terraform changes use the Terminal and Code tabs.
+
+    # Quick Reference
+
+    Application URL:
+    ```
+    cd /root/ecs
+    terraform output alb_hc_frontend
+    ```
+
+    Consul URL
+    ```
+    cd /root/consul
+    terraform output dns_name
+    ```
+
+    SSH EC2 bastion host
+    ```
+    cd /root/consul
+    terraform output ec2_ip
+    ```
   notes:
   - type: text
     contents: In this assignment, you are free to do your own consul validation. <br>
   tabs:
+  - title: Terminal
+    type: terminal
+    hostname: cloud-client
   - title: Code
     type: code
     hostname: cloud-client
     path: /root
-  - title: Cloud CLI
-    type: terminal
-    hostname: cloud-client
-  - title: Cloud Consoles
+  - title: Architecture
+    type: website
+    url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-consul-ecs-ec2.html
+  - title: AWS Console
     type: service
     hostname: cloud-client
     path: /
     port: 80
+  - title: Docker-Term
+    type: terminal
+    hostname: vm
+  - title: Docker-Code
+    type: code
+    hostname: vm
+    path: /root/consul-ecs-agent
   difficulty: basic
   timelimit: 1800
-checksum: "2201015341039429501"
+checksum: "10532092229769977768"

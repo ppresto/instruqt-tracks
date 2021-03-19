@@ -3,8 +3,8 @@
 #sleep for creds
 #sleep 120
 
-cd /root/consul-ecs-agent
-make build
-make push
+cd /root/ecs
+terraform init
+terraform apply -auto-approve
 
 exit 0

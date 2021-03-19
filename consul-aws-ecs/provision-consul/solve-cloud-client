@@ -4,6 +4,7 @@
 #sleep 120
 
 cd /root/consul
+sleep 60
 echo "Provision Consul ..."
 terraform init
 terraform apply -auto-approve

@@ -64,11 +64,12 @@ echo "Provision VPC ..."
 
 # Wait for AMI to be available
 #until aws ec2 describe-images --owners self --query 'Images[*].[ImageId]' --output text; do
-until aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --query 'Images[*].[ImageId]' --output text; do
+until aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --output text | grep is-immutable-consul; do
     echo "Waiting for AWS AMI to be available"
     sleep 1
 done
 
 aws ec2 describe-images --owners self
+aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --output text
 
 exit 0
