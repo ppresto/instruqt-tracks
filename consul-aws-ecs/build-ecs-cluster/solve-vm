@@ -3,7 +3,7 @@
 #sleep for creds
 #sleep 120
 
-cd /root/ecs
+cd /root/aws/ecs
 terraform init
 terraform apply -auto-approve
 

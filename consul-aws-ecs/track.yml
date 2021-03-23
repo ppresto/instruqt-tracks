@@ -97,15 +97,20 @@ challenges:
   - type: text
     contents: |-
       In this assignment you will familiarize yourself with the AWS cloud
-      environment, and provision a consul server using Hashicorp best practices.
+      environment, and provision a consul server using Hashicorp best practices.  To get
+      you started we are creating a linux workstation, provisioning an empty VPC, and
+      using packer to create the consul AMI we will use.
   tabs:
+  - title: Code Editor
+    type: service
+    hostname: vm
+    port: 8443
   - title: Terminal
     type: terminal
     hostname: vm
-  - title: Code
-    type: code
-    hostname: vm
-    path: /root/consul
+  - title: vm2
+    type: terminal
+    hostname: vm2
   - title: Architecture
     type: website
     url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-consul.html
@@ -282,4 +287,4 @@ challenges:
     hostname: vm
   difficulty: basic
   timelimit: 1800
-checksum: "10532092229769977768"
+checksum: "9368509376116641749"

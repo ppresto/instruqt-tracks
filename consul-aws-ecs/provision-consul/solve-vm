@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /root/consul
+cd /root/aws/consul
 sleep 60
 echo "Provision Consul ..."
 terraform init

@@ -10,11 +10,12 @@ containers:
   - 8080
 virtualmachines:
 - name: vm
+  image: instruqt-hashicorp/terraform-workstation-3-5-0
+  shell: /bin/bash -l
+  machine_type: n1-standard-1
+- name: vm2
   image: debian-9
-  shell: /bin/bash
-  environment:
-    ANOTHER: one
-    ENV_VAR: value
+  shell: /bin/bash -l
   machine_type: g1-small
 aws_accounts:
 - name: consul

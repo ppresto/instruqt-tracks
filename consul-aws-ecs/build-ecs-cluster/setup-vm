@@ -3,6 +3,6 @@
 #path
 echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
 
-set-workdir /root/consul-ecs-agent
+set-workdir /root/aws/ecs
 
 exit 0
