@@ -43,6 +43,7 @@ sed -i s"/^\(nameserver.*\)/#\1/" /etc/resolv.conf
 systemctl enable dnsmasq
 systemctl start dnsmasq
 
+# Disabled in favor of configuring dnsServer in each task definition
 # Configure Docker Daemon to route DNS requests to local host of default bridge network
 #sed -i "s/OPTIONS=\"\(.*\)\"/OPTIONS=\"\1 --dns 172.17.0.1\"/" /etc/sysconfig/docker
 #systemctl restart docker
@@ -59,7 +60,8 @@ echo ECS_INSTANCE_ATTRIBUTES={\"purchase-option\":\"spot\"} >> /etc/ecs/ecs.conf
 mkdir -p /etc/nginx/conf.d
 cat <<-'EOF' > /etc/nginx/conf.d/default.conf
 # /etc/nginx/conf.d/default.conf
-resolver 172.17.0.1 valid=10s;
+resolver 172.17.0.1 valid=10s ipv6=off;
+#error_log /var/log/nginx/error.log debug;
 
 upstream backend {
     zone upstream_backend 64k;
@@ -72,20 +74,11 @@ server {
         root   /usr/share/nginx/html;
         index  index.html index.htm;
     }
-    # Proxy pass the api location to save CORS
-    # Use location exposed by Consul connect
+
     location /api {
         proxy_pass http://backend;
-        # kill cache
-        sendfile off;
-        add_header Last-Modified $date_gmt;
-        add_header Cache-Control 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0';
-        if_modified_since off;
-        expires off;
-        etag off;
-        proxy_no_cache 1;
-        proxy_cache_bypass 1;
     }
+
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
         root   /usr/share/nginx/html;

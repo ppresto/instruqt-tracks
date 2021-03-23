@@ -9,16 +9,17 @@ asg=$(aws autoscaling describe-auto-scaling-groups | jq -r '.AutoScalingGroups[]
 lc=$(aws autoscaling describe-launch-configurations | jq -r '.LaunchConfigurations[] | select(.LaunchConfigurationName | test("presto")) | .LaunchConfigurationName')
 
 # Scale ASG by increasing min-size +1
-aws autoscaling update-auto-scaling-group --auto-scaling-group-name ${asg} --launch-configuration-name ${lc} --min-size  2 --max-size 3
-
-# Update ECS Tasks in Service
-aws ecs update-service --service svc_hc_frontend --desired-count 4
+aws autoscaling update-auto-scaling-group --auto-scaling-group-name ${asg} --launch-configuration-name ${lc} --min-size 2 --max-size 3
 
 # Get ECS Cluster ARN
 ecs_cluster=$(aws ecs describe-clusters --clusters ecs-vpc-presto | jq -r '.clusters[].clusterArn')
 
-# Update ECS Task Definition
+# Update ECS Task Definition (frontend)
 aws ecs update-service --cluster ${ecs_cluster} --service svc_hc_frontend --desired-count 4
+
+# Update ECS Task Definition (pub-api)
+aws ecs update-service --cluster ${ecs_cluster} --service svc_hc_pub-api --desired-count 4
+
 ```
 
 ### Hashicups Microservice Troubleshooting

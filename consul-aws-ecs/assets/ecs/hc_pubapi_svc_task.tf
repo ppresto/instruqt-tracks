@@ -146,28 +146,26 @@ resource "consul_keys" "pub-api" {
       { "name": "pub-api",
         "id": "pub-api-SERVICE_PORT",
         "token": "",
-        "address": "CONTAINER_IP",
-        "port": 8080,
+        "address": "EC2_HOST_IP",
+        "port": SERVICE_PORT,
         "tags": [
           "ecs",
           "pub-api",
           "dev"
         ],
         "meta": {
-        {{ range tree "service/pub-api/metadata" }}
-        "{{- .Key -}}":"{{- .Value -}}",
-        {{ end }}
-        "meta":"auto-generated-v1"
-      },
+          {{ range tree "service/pub-api/metadata" }}
+          "{{- .Key -}}":"{{- .Value -}}",
+          {{ end }}
+          "meta":"auto-generated-v1"
+        },
         "checks": [
           {
               "id": "pub-api-SERVICE_PORT-tcp-8080",
               "name": "Public API - TCP 8080",
               "tcp": "CONTAINER_IP:8080",
               "interval": "10s",
-              "timeout": "1s",
-              "DeregisterCriticalServiceAfter": "1m"
-
+              "timeout": "1s"
           },
           {
               "id": "pub-api-SERVICE_PORT-http-8080",
@@ -176,6 +174,14 @@ resource "consul_keys" "pub-api" {
               "tls_skip_verify": true,
               "interval": "5s",
               "timeout": "2s"
+          },
+          {
+              "id": "pub-api-tcp-ec2-SERVICE_PORT",
+              "name": "EC2 TCP Port Mapping - SERVICE_PORT",
+              "tcp": "EC2_HOST_IP:SERVICE_PORT",
+              "interval": "10s",
+              "timeout": "2s",
+              "DeregisterCriticalServiceAfter": "1m"
           }
         ]
       }

@@ -4,7 +4,7 @@ FROM envoyproxy/envoy-alpine:v${ENVOY_VERSION}
 
 ARG CONSUL_VERSION
 
-RUN apk add -u bash curl jq && \
+RUN apk add -u bash curl jq bind-tools && \
     wget https://releases.hashicorp.com/consul/"${CONSUL_VERSION}"/consul_"${CONSUL_VERSION}"_linux_amd64.zip \
 	-O /tmp/consul.zip && \
     unzip /tmp/consul.zip -d /tmp && \

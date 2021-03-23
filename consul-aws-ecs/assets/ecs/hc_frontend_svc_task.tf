@@ -10,7 +10,7 @@ resource "aws_ecs_task_definition" "svc_hc_frontend" {
   [
     {
       "name": "svc_hc_frontend",
-      "image": "hashicorpdemoapp/frontend:v0.0.3",
+      "image": "ppresto/frontend:v0.0.1",
       "dnsServers": ["172.17.0.1","10.0.0.2"],
       "essential": true,
       "logConfiguration": {
@@ -102,19 +102,19 @@ resource "consul_keys" "frontend" {
       { "name": "frontend",
         "id": "frontend-SERVICE_PORT",
         "token": "",
-        "address": "CONTAINER_IP",
-        "port": 80,
+        "address": "EC2_HOST_IP",
+        "port": SERVICE_PORT,
         "tags": [
             "ecs",
             "frontend",
             "dev"
           ],
           "meta": {
-        {{ range tree "service/frontend/metadata" }}
-        "{{- .Key -}}":"{{- .Value -}}",
-        {{ end }}
-        "meta":"auto-generated-v1"
-      },
+            {{ range tree "service/frontend/metadata" }}
+            "{{- .Key -}}":"{{- .Value -}}",
+            {{ end }}
+            "meta":"auto-generated-v1"
+          },
           "checks": [
             {
                 "id": "frontend-tcp-80-SERVICE_PORT",

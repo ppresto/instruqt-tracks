@@ -6,7 +6,8 @@ module "ecs-cluster" {
   ssh_key_name = var.ssh_key_name
   additional_security_group_ids = [data.terraform_remote_state.consul.outputs.consul_sg]
   ecs_ec2_user_data = templatefile("${path.module}/templates/ecs-ec2-init.sh", {cluster_name = var.cluster_name})
-
+  min_spot_instances = var.min_spot_instances
+  max_spot_instances = var.max_spot_instances
   # EC2 instances will live within this VPC
   vpc_id = data.terraform_remote_state.vpc.outputs.vpc_id
 
