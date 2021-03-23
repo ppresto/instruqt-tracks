@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd /root/consul
+sleep 60
+echo "Provision Consul ..."
+terraform init
+terraform apply -auto-approve
+
+exit 0

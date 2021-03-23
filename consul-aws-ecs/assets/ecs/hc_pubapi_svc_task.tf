@@ -46,6 +46,7 @@ resource "aws_ecs_task_definition" "svc_hc_pubapi" {
     {
       "name": "svc_hc_pubapi",
       "image": "hashicorpdemoapp/public-api:v0.0.1",
+      "dnsServers": ["172.17.0.1","10.0.0.2"],
       "essential": true,
       "logConfiguration": {
         "logDriver": "awslogs",
@@ -55,7 +56,6 @@ resource "aws_ecs_task_definition" "svc_hc_pubapi" {
           "awslogs-stream-prefix": "svc_hc_pubapi"
         }
       },
-      "dnsServers": ["172.17.0.1"],
       "environment": [
         {
             "name": "BIND_ADDRESS",
@@ -77,6 +77,7 @@ resource "aws_ecs_task_definition" "svc_hc_pubapi" {
     {
       "image": "ppresto/consul-ecs:1.9.3-1.16.0-5",
       "name": "svc_hc_pubapi-init",
+      "dnsServers": ["172.17.0.1","10.0.0.2"],
       "essential": false,
       "logConfiguration": {
         "logDriver": "awslogs",

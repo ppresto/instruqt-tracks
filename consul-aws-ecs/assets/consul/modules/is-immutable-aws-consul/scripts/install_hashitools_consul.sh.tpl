@@ -14,6 +14,9 @@ advertise_addr      = "$${LOCAL_IPV4}"
 client_addr         = "0.0.0.0"
 log_level           = "INFO"
 ui                  = true
+dns_config {
+    enable_truncate = true
+}
 
 # AWS cloud join
 retry_join          = ["provider=aws tag_key=Environment-Name tag_value=${environment_name}-consul"]

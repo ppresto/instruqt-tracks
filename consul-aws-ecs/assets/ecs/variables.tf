@@ -19,6 +19,6 @@ variable "cluster_name" {
 }
 
 variable "consul_ecs_agent_image_name" {
-  default     = "ppresto/consul-ecs:1.9.3-1.16.0-5"
+  default     = "joatmon08/consul-ecs:v1.9.1-v1.16.0"
   description = " Consul-ECS registeration init/sidecar container image"
 }

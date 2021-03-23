@@ -101,17 +101,17 @@ challenges:
   tabs:
   - title: Terminal
     type: terminal
-    hostname: cloud-client
+    hostname: vm
   - title: Code
     type: code
-    hostname: cloud-client
+    hostname: vm
     path: /root/consul
   - title: Architecture
     type: website
     url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-consul.html
   - title: AWS Console
     type: service
-    hostname: cloud-client
+    hostname: vm
     path: /
     port: 80
   difficulty: basic
@@ -166,7 +166,7 @@ challenges:
     path: /root/consul-ecs-agent
   - title: AWS Console
     type: service
-    hostname: cloud-client
+    hostname: vm
     path: /
     port: 80
   difficulty: basic
@@ -182,7 +182,7 @@ challenges:
     * consul_ecs_agent_image_name=<YOUR_DOCKER_REPOSITORY:TAG>
     * cluster_name=<OPTIONAL_CUSTOM_NAME>
 
-    If you forgot your docker repo:tag you can go to the Docker-Term tab and run `docker images` to gather that information.
+    If you forgot your docker repo:tag you can run `docker images` to gather that information.
 
     # Provision the ECS Cluster
     Go to the Terminal tab and execute the following
@@ -216,22 +216,19 @@ challenges:
   tabs:
   - title: Terminal
     type: terminal
-    hostname: cloud-client
+    hostname: vm
   - title: Code
     type: code
-    hostname: cloud-client
+    hostname: vm
     path: /root/ecs
   - title: Architecture
     type: website
     url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-consul-ecs-ec2.html
   - title: AWS Console
     type: service
-    hostname: cloud-client
+    hostname: vm
     path: /
     port: 80
-  - title: Docker-Term
-    type: terminal
-    hostname: vm
   difficulty: basic
   timelimit: 1800
 - slug: sandbox
@@ -240,9 +237,7 @@ challenges:
   title: Consul Sanbox
   teaser: Use this sandbox to test various Consul use cases.
   assignment: |-
-    To make Docker changes to the sidecar container use the Docker-Term an Docker-Code tabs.
-
-    To make terraform changes use the Terminal and Code tabs.
+    To make changes  use the Code and Terminal tabs.
 
     # Quick Reference
 
@@ -267,28 +262,24 @@ challenges:
   - type: text
     contents: In this assignment, you are free to do your own consul validation. <br>
   tabs:
-  - title: Terminal
-    type: terminal
-    hostname: cloud-client
-  - title: Code
-    type: code
-    hostname: cloud-client
-    path: /root
-  - title: Architecture
-    type: website
-    url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-consul-ecs-ec2.html
   - title: AWS Console
     type: service
-    hostname: cloud-client
+    hostname: vm
     path: /
     port: 80
-  - title: Docker-Term
-    type: terminal
-    hostname: vm
-  - title: Docker-Code
+  - title: Code
     type: code
     hostname: vm
-    path: /root/consul-ecs-agent
+    path: /root
+  - title: Terminal-1
+    type: terminal
+    hostname: vm
+  - title: Terminal-2
+    type: terminal
+    hostname: vm
+  - title: Terminal-3
+    type: terminal
+    hostname: vm
   difficulty: basic
   timelimit: 1800
 checksum: "10532092229769977768"

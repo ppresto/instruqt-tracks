@@ -11,7 +11,7 @@ resource "aws_ecs_task_definition" "svc_hc_frontend" {
     {
       "name": "svc_hc_frontend",
       "image": "hashicorpdemoapp/frontend:v0.0.3",
-      "dnsServers": ["172.17.0.1"],
+      "dnsServers": ["172.17.0.1","10.0.0.2"],
       "essential": true,
       "logConfiguration": {
         "logDriver": "awslogs",
@@ -39,6 +39,7 @@ resource "aws_ecs_task_definition" "svc_hc_frontend" {
     {
       "image": "${var.consul_ecs_agent_image_name}",
       "name": "svc_hc_frontend-init",
+      "dnsServers": ["172.17.0.1","10.0.0.2"],
       "essential": false,
       "logConfiguration": {
         "logDriver": "awslogs",

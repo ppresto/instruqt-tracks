@@ -1,17 +1,8 @@
 #!/bin/bash
 
-#path
-echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
+set-workdir /root/consul-ecs-agent
 
 echo "Installing Docker"
-sudo apt-get update
-sudo apt-get install \
-    apt-transport-https \
-    ca-certificates \
-    curl \
-    gnupg \
-    lsb-release -y
-
 curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
 echo \
@@ -29,13 +20,5 @@ sudo systemctl enable containerd.service
 
 sudo systemctl start docker.service
 sudo systemctl start containerd.service
-
-echo "clone repo"
-cd /root
-git clone https://github.com/ppresto/instruqt-tracks.git
-cp -r instruqt-tracks/consul-aws-ecs/assets/consul-ecs-agent .
-rm -rf instruqt-tracks
-
-set-workdir /root/consul-ecs-agent
 
 exit 0
