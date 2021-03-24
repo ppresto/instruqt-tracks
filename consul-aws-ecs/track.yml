@@ -307,18 +307,41 @@ challenges:
   title: Consul Sanbox
   teaser: Use this sandbox to test various Consul use cases.
   assignment: |-
-    To make changes use the Code Editor and Terminal tabs.
+    # Consul CLI
+    You can use consul as a CLI tool.  First setup your environment.
+    ```
+    CONSUL_URL=$(terraform output -state=/root/aws/consul/terraform.tfstate dns_name)
+    export CONSUL_HTTP_ADDR=${CONSUL_URL}
+    ```
+
+    Now run consul commands.  For exammple, list all consul members.
+    ```
+    consul members
+    ```
+    For more information: https://www.consul.io/commands
+
     # Consul API
     Consul has a very rich API.  Lets take a quick look at just two of the endpoints you might want to use to search services.
 
     List services
     ```
-    curl -s -X GET http://consul-lb-135321ca0133070a.elb.us-west-2.amazonaws.com/v1/catalog/services | jq -r keys
+    curl -s --get ${CONSUL_HTTP_ADDR}/v1/catalog/services | jq -r keys
+    for svc in $(curl -s -X GET ${CONSUL_HTTP_ADDR}/v1/catalog/services| jq -r 'keys | .[]'); do
     ```
+    Note: CONSUL_HTTP_ADDR is set in the Consul CLI command above.  Set this variable before using the API examples.
 
     Use metadata to list services running a specific image version
     ```
-    curl -s -X GET http://consul-lb-135321ca0133070a.elb.us-west-2.amazonaws.com/v1/catalog/services --data-urlencode 'filter=Meta.task_image == "ppresto/frontend:v0.0.1"
+    curl --get http://${CONSUL_HTTP_ADDR}/v1/catalog/service/frontend --data-urlencode 'filter=ServiceMeta.task_image == "ppresto/frontend:v0.0.1"'
+    curl --get http://${CONSUL_HTTP_ADDR}/v1/catalog/service/frontend --data-urlencode 'filter=ServiceMeta.task_image == "ppresto/frontend:v0.0.2"'
+    ```
+
+    Iterate through all services and filter out specific tasks based on metatdata key:values.
+    ```
+    for k in $(curl -s --get ${CONSUL_HTTP_ADDR}/v1/catalog/services| jq -r 'keys | .[]'); do \
+      curl -s --get ${CONSUL_HTTP_ADDR}/v1/catalog/service/$k \
+      --data-urlencode 'filter=ServiceMeta.task_image == "ppresto/frontend:v0.0.1"'; done \
+      | jq -r
     ```
 
     # Quick Reference
@@ -366,4 +389,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "9172167365040942122"
+checksum: "8845770051014766316"
