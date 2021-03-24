@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -l
 
 if [ -f /tmp/skip-check ]; then
     rm /tmp/skip-check

@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/bash -l
 
+sleep 10
 set-workdir /root/aws/consul-ecs-agent
 
 sed -i "s/\/root\/aws.*/\/root\/aws\/consul-ecs-agent/" /etc/systemd/system/code-server.service

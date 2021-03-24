@@ -1,11 +1,10 @@
-#!/bin/bash
+#!/bin/bash -l
 
-#path
-echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
+sleep 30
 
 set-workdir /root/aws
 
-sed -i "s/\/root\/aws.*/\/root\/aws" /etc/systemd/system/code-server.service
+sed -i "s/\/root\/aws.*/\/root\/aws/" /etc/systemd/system/code-server.service
 systemctl daemon-reload
 systemctl restart code-server
 

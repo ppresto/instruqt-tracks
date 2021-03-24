@@ -1,9 +1,11 @@
-#!/bin/bash
+#!/bin/bash -l
 
+
+sleep 10
 cd /root/aws/consul
-sleep 60
-echo "Provision Consul ..."
+echo "Provision Consul ..." >> output.txt
+env >> output.txt
 terraform init
-terraform apply -auto-approve > output.txt
+terraform apply -auto-approve >> output.txt
 
 exit 0

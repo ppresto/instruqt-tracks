@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/bin/bash -l
 
+sleep 10
 #path
-echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
+#echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
 
 set-workdir /root/aws/ecs
 
