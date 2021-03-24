@@ -5,6 +5,6 @@
 
 cd /root/aws/ecs
 terraform init
-terraform apply -auto-approve
+terraform apply -auto-approve > output.txt
 
 exit 0

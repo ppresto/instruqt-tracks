@@ -4,6 +4,6 @@ cd /root/aws/consul
 sleep 60
 echo "Provision Consul ..."
 terraform init
-terraform apply -auto-approve
+terraform apply -auto-approve > output.txt
 
 exit 0

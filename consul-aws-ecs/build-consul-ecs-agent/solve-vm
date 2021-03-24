@@ -5,6 +5,7 @@
 
 cd /root/aws/consul-ecs-agent
 make build
-make push
+echo "Skipping Docker push.  Using default"
+#make push
 
 exit 0

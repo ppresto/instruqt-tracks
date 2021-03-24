@@ -83,7 +83,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=root
-ExecStart=/usr/bin/code-server --host 0.0.0.0 --port 8443 --cert --auth none /root/aws
+ExecStart=/usr/bin/code-server --host 0.0.0.0 --port 8443 --cert --auth none /root/aws/consul
 
 [Install]
 WantedBy=multi-user.target
@@ -104,7 +104,7 @@ until aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,V
     sleep 1
 done
 
-aws ec2 describe-images --owners self
-aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --output text
+#aws ec2 describe-images --owners self
+#aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --output text
 
 exit 0
