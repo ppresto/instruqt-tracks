@@ -5,7 +5,7 @@ title: POV Shutterfly - Consul on AWS
 teaser: Use Consul's central service registry and discovery for services running on
   ECS and EC2.
 description: |-
-  You will use Terraform to automatically setup a VPC, and NLB + ASG managed Consul Enterprise cluster
+  You will use Terraform to automatically setup an entire data center starting with a VPC, NLB, and ASG managed Consul Enterprise cluster
   using Hashicorp best practices.
 
   Then using your docker account, build a single sidecar container that can
@@ -34,7 +34,7 @@ challenges:
   teaser: Create an immutable Consul architecture from scratch.  Using Packer and
     Terraform provision a VPC, NLB, and ASG to automatically manage the Consul cluster.
   assignment: |-
-    ## Visual Studio Code Tour
+    ## Code Editor Tour
     Open your text editor, Visual Studio Code by going to the Code Editor tab on the left. First get familiar with the menus. This is running the Visual Studio Code editor.
 
     Notice the menu bar with File, Edit, and other menus at the top of the VS Code Editor. You can find all the menus on this menu bar.
@@ -78,12 +78,12 @@ challenges:
     and considered healthy autopilot will safely drain the old nodes.  This enables us to make changes
     or upgrades to consul with no downtime just like a blue/green deployment.
 
-    For additional details reference:
+    If you're new to Packer its 100% open source.  Take a look at https://www.packer.io/.  For additional details reference:
     ```
     /root/aws/packer/consul
     /root/aws/packer/consul/run-linux.sh
     ```
-    If you're new to Packer its 100% open source.  Take a look at https://www.packer.io/
+    Feel free to modify the packer template and practice building your consul image in /root/aws/packer/consul
 
     # Provision Consul
     Use Terraform to provision a NLB, and ASG using the immutable
@@ -94,7 +94,7 @@ challenges:
     terraform apply -auto-approve
     ```
     While Terraform is provisiong this infrastructure lets take a look at the `terraform` tab and
-    review `main.tf`. This code is leveraging our implementation services team's terraform module.
+    review `main.tf`. This code is leveraging Hashicorp best practices.
 
     # Load the Consul UI
     Copy the `dns_name` value from the terraform outputs and put this into a new browser tab to see the consul UI.
@@ -102,24 +102,28 @@ challenges:
     terraform output dns_name
     ```
     The UI shows consul and snapshot services
-    along with an ec2 bastion host that consul discovered
+    along with an ec2 bastion host that consul discovered.  FYI: We are exposing this externally for easy visibility
+    from your workstation, but this would not be recommended in production.
 
     # EC2 Consul Client Example
-    The full ssh command to connect the ec2 bastion host is available in the terraform output.  Copy this output to SSH to the bastion host and review its configuration.
-    ```
-    terraform output ec2_ip
-    ```
+    The full ssh command to connect the ec2 bastion host is available in the terraform output.  Copy this output to SSH to the bastion host and review its client configuration.
+
     Review the following configurations to see how easy you can add ec2 services to consul
     * Consul Systemd: /etc/systemd/system/consul.service
     * Consul Client: /etc/consul.d/consul.hcl
     * Consul Service Definition: /etc/consul.d/ec2-bastion-svc.json
+    ```
+    terraform output ec2_ip
+    ```
+    Note:  This ec2 bastion host/service will only be registered in consul for 30 min because we aren't applying a license.
   notes:
   - type: text
     contents: |-
       In this assignment you will familiarize yourself with the AWS cloud
-      environment, and provision a consul server using Hashicorp best practices.  To get
-      you started we are creating a linux workstation, provisioning an empty VPC, and
-      using packer to create the consul AMI we will use.
+      environment, and provision a consul server using Hashicorp best practices.
+
+      To get you started we are creating a linux workstation, provisioning an empty VPC, and
+      using packer to create the consul AMI we will use.  You are welcome to rerun or rebuild any of these components if you wish.
   tabs:
   - title: Code Editor
     type: service
@@ -152,11 +156,12 @@ challenges:
     If you dont already have one sign up for a free account now. <br>
 
     # Update DockerID
-    Go to the `Code` tab or use vi to edit file: `Makefile`.
+    Go to the `Code Editor` or use vi to edit file: `Makefile`.
     Replace the DOCKER_ID (ex: ppresto) with your docker account name and save the file.
+    If you want to build multiple versions of this image increment PATCH_VERSION +1.
 
     # Docker Login
-    Go to the `Docker` tab  and login to your dockerhub account.
+    Go to the `Terminal` tab  and login to your dockerhub account.
     ```
     docker login
     ```
@@ -168,18 +173,19 @@ challenges:
     ```
 
     # entrypoint.sh
-    While the image is being built go to the Code tab
+    While the image is being built go to the Code Editor
     and take a look at `entrypoint.sh` to see how new services will be registered.
-    * Line: 218 - set_service_configuration()
+    * set_service_configuration()
 
     # Copy image REPOSITORY:TAG
-    Copy the full image name because we need this for the next challenge.
+    Copy the full image name because you will need to configure your ECS task to use this in the next challenge.
     ```
     docker images --format "table {{.Repository}}:{{.Tag}}" | grep -v envoyproxy
     ```
   notes:
   - type: text
-    contents: In this challenge you will build an init/sidecar image used to register
+    contents: In this challenge you will build an init/sidecar image using docker
+      and host it in your dockerhub account.  This image will be used to register
       services to consul.
   tabs:
   - title: Terminal
@@ -203,7 +209,7 @@ challenges:
   teaser: Use Terraform to provision an ECS Cluster and deploy Hashicups
   assignment: |-
     # my.auto.tfvars
-    In the Code tab verify `my.auto.tfvars`
+    In the Code Editor verify `my.auto.tfvars`
     * consul_ecs_agent_image_name=<YOUR_DOCKER_REPOSITORY:TAG>
     * cluster_name=<OPTIONAL_CUSTOM_NAME>
 
@@ -230,14 +236,53 @@ challenges:
     ```
     terraform output alb_hc_frontend
     ```
-    You should see the Hashicups application load and be able to order a Packer Spiced Latte!
+    You should see the Hashicups application load and be able to order a Packer Spiced Latte!  Loading this page proves our microservices are properly discoverying each other and load balancing traffic using consul DNS.
+
+    Lets add 1 node to the ECS Cluster ASG.  Go to the Code Editor tab and modify `my.auto.tfvars`.
+    ```
+    min_spot_instances = 2
+    ````
+    Run Terraform to apply the changes.  Watch the AWS console to see these changes in the ECS cluster.  This might take a couple minutes.
+    ```
+    terraform apply -auto-approve
+    ```
+    Some services may have moved over to the new ECS node.  You can review the Consul UI to verify service information is up to date in real time.
+
+    Now that we have multiple ECS servers lets update a couple tasks to run many instances so we can see Consul service discovery in action!  We can perminantly modify our task definition using terraform, or use the AWS CLI for temporary changes.  This time lets use the CLI.
+    ```
+    # Get ECS Cluster Name from terraform output
+    ecs_cluster_name=$(terraform output cluster_name)
+
+    # Get ECS Cluster ARN
+    ecs_cluster=$(aws ecs describe-clusters --clusters ${ecs_cluster_name} | jq -r '.clusters[].clusterArn')
+
+    # Update ECS Task Definition (frontend)
+    aws ecs update-service --cluster ${ecs_cluster} --service svc_hc_frontend --desired-count 4
+    ```
+    You should see 4 instances of the frontend service running.  If you look closely there will probably be 2 instances registered on each ECS node using the dynamic host port that is assigned by ECS at runtime.
+    This initial request is going through the frontend ALB so we can properly balance load for our North/South traffic.  Internal East/West traffic probably makes up 85-90% of the network traffic in your datacenter and this could grow.  Having every request
+    go through an ALB just to find a healthy instance of a service adds an additional hop of latency, and ALB traffic cost $$$.  Use Consul DNS instead.
+
+    Now that we have requests going to the frontend service via our ALB lets add instances of our public api service.
+    This service has no ALB so the frontend services will need to rely on Consul DNS to discover healthy
+    pub-api instances, the dynamic port, and balance traffic across them.  Here is more information on [https://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-discovery.html#service-discovery-considerations](Service Discovery in AWS)
+    ```
+    # Update ECS Task Definition (pub-api)
+    aws ecs update-service --cluster ${ecs_cluster} --service svc_hc_pubapi --desired-count 4
+    ```
+    Verify the pub-api services are properly discovered and registered using the Consul UI.
+    Refresh the Hashicups URL a few times to ensure everything is working across ECS nodes and task instances.
+
+    Use the AWS CLI to run the same commands to reduce the --desired-count and watch the services fail the healthcheck in consul.
+    This means they will not resolvable in a DNS lookup and wont receive traffic.  Only healthy instances are resolved.
+    After a minute they will be removed from the registery based on the healthcheck configuration.
   notes:
   - type: text
     contents: |-
-      In this assignment you will build an immutable image of Consul with [HashiCorp Packer](https://packer.io/). <br>
+      In this challenge you will build an ASG managed ECS cluster and deploy Hashicups.<br>
 
-      Immutability has many advantages for infrastructure management.
-      Consul Enterprise can take advantage of immutable patterns with [Automated Upgrades](https://www.consul.io/docs/enterprise/upgrades/index.html).
+      You will scale up/down the ECS cluster and Hashicups microservices to validate Consul's service discovery capability.
+      Services will be registered with metadata, discover and load balance request to health instances only via Consu DNS.
   tabs:
   - title: Terminal
     type: terminal
@@ -262,10 +307,21 @@ challenges:
   title: Consul Sanbox
   teaser: Use this sandbox to test various Consul use cases.
   assignment: |-
-    To make changes  use the Code and Terminal tabs.
+    To make changes use the Code Editor and Terminal tabs.
+    # Consul API
+    Consul has a very rich API.  Lets take a quick look at just two of the endpoints you might want to use to search services.
+
+    List services
+    ```
+    curl -s -X GET http://consul-lb-135321ca0133070a.elb.us-west-2.amazonaws.com/v1/catalog/services | jq -r keys
+    ```
+
+    Use metadata to list services running a specific image version
+    ```
+    curl -s -X GET http://consul-lb-135321ca0133070a.elb.us-west-2.amazonaws.com/v1/catalog/services --data-urlencode 'filter=Meta.task_image == "ppresto/frontend:v0.0.1"
+    ```
 
     # Quick Reference
-
     Application URL:
     ```
     cd /root/aws/ecs
@@ -285,7 +341,10 @@ challenges:
     ```
   notes:
   - type: text
-    contents: In this assignment, you are free to do your own consul validation. <br>
+    contents: |-
+      In this assignment, you are free to do your own consul validations. <br>
+
+      Consul API examples are included to show how to search the service registry and filter based on metadata.
   tabs:
   - title: Code Editor
     type: service
@@ -307,4 +366,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "13172363314668246389"
+checksum: "9172167365040942122"

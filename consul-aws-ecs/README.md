@@ -18,7 +18,7 @@ ecs_cluster=$(aws ecs describe-clusters --clusters ecs-vpc-presto | jq -r '.clus
 aws ecs update-service --cluster ${ecs_cluster} --service svc_hc_frontend --desired-count 4
 
 # Update ECS Task Definition (pub-api)
-aws ecs update-service --cluster ${ecs_cluster} --service svc_hc_pub-api --desired-count 4
+aws ecs update-service --cluster ${ecs_cluster} --service svc_hc_pubapi --desired-count 4
 
 ```
 
@@ -36,4 +36,16 @@ curl -X POST -H 'Content-type: application/json' --data '{"query":"{coffees{id n
 
 #product-api
 curl http://product-api.service.consul:9090/coffees
+```
+
+### Consul API Commands
+```
+# List services
+curl -s -X GET http://consul-lb-135321ca0133070a.elb.us-west-2.amazonaws.com/v1/catalog/services | jq -r keys
+
+# list services in ecs_cluster
+curl -s -X GET http://consul-lb-135321ca0133070a.elb.us-west-2.amazonaws.com/v1/catalog/services --data-urlencode 'filter=Meta.ecs_cluster == "ecs-vpc-presto"'
+
+# List services with image matching frontend:v0.0.1
+curl -s -X GET http://consul-lb-135321ca0133070a.elb.us-west-2.amazonaws.com/v1/catalog/services --data-urlencode 'filter=Meta.task_image == "ppresto/frontend:v0.0.1"
 ```

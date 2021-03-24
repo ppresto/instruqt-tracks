@@ -1,11 +1,25 @@
 #!/bin/bash -l
-
 sleep 30
 
+CONSUL_VER=1.8.0
+
 set-workdir /root/aws
+
+# Install Consul
+curl -O https://releases.hashicorp.com/consul/${CONSUL_VER}+ent/consul_${CONSUL_VER}+ent_linux_amd64.zip
+mv consul_${CONSUL_VER}+ent_linux_amd64.zip consul.zip
+unzip -qq "consul.zip"
+sudo mv "consul" "/usr/local/bin/consul"
+sudo chmod +x "/usr/local/bin/consul"
+rm -rf "consul.zip"
+
+# Set Consul Env
+CONSUL_URL=$(terraform output -state=/root/aws/consul/terraform.tfstate dns_name)
+export CONSUL_HTTP_ADDR=${CONSUL_URL}
 
 sed -i "s/\/root\/aws.*/\/root\/aws/" /etc/systemd/system/code-server.service
 systemctl daemon-reload
 systemctl restart code-server
+
 
 exit 0
