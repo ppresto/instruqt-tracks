@@ -1,7 +1,7 @@
 resource "aws_ecs_task_definition" "svc_hc_postgres" {
   family                   = "svc_hc_postgres"
   requires_compatibilities = ["EC2"]
-  network_mode             = "host"    # Using awsvpc as our network mode as this is required for Fargate
+  network_mode             = "awsvpc"    # Using awsvpc as our network mode as this is required for Fargate
   memory                   = 512         # Specifying the memory our container requires
   cpu                      = 256         # Specifying the CPU our container requires
   execution_role_arn       = "${module.ecs-cluster.ecs_instance_role_arn}"
@@ -94,11 +94,12 @@ resource "aws_ecs_service" "svc_hc_postgres" {
   # ECS doesn't deal with desired_count=1 for HA.  Setting health% to 0 for clean deployments
   deployment_minimum_healthy_percent = 0
 
-  #network_configuration {
-  #  subnets         = data.terraform_remote_state.vpc.outputs.public_subnets
-  #  assign_public_ip = false
-  #  security_groups  = [data.terraform_remote_state.consul.outputs.consul_sg, aws_security_group.postgres.id]
-  #}
+  network_configuration {
+    subnets         = data.terraform_remote_state.vpc.outputs.public_subnets
+    assign_public_ip = false
+    #security_groups  = [aws_security_group.consul_svc.id, aws_security_group.consul_ecs_lb.id]
+    security_groups  = [data.terraform_remote_state.consul.outputs.consul_sg, aws_security_group.postgres.id]
+  }
 }
 
 resource "consul_keys" "postgres" {

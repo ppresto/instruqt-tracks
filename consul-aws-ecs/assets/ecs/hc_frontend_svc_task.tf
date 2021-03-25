@@ -78,7 +78,7 @@ resource "aws_ecs_service" "svc_hc_frontend" {
   cluster         = "${module.ecs-cluster.cluster_id}"
   task_definition = "${aws_ecs_task_definition.svc_hc_frontend.arn}"
   launch_type     = "EC2"
-  desired_count   = 2
+  desired_count   = 1
   deployment_minimum_healthy_percent = 0
   force_new_deployment = true
 

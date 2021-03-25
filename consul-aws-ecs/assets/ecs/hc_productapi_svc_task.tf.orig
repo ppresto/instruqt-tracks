@@ -1,5 +1,5 @@
-resource "aws_ecs_task_definition" "svc_hc_postgres" {
-  family                   = "svc_hc_postgres"
+resource "aws_ecs_task_definition" "svc_hc_productapi" {
+  family                   = "svc_hc_productapi"
   requires_compatibilities = ["EC2"]
   network_mode             = "host"    # Using awsvpc as our network mode as this is required for Fargate
   memory                   = 512         # Specifying the memory our container requires
@@ -9,35 +9,33 @@ resource "aws_ecs_task_definition" "svc_hc_postgres" {
   container_definitions    = <<DEFINITION
   [
     {
-      "name": "svc_hc_postgres",
-      "image": "hashicorpdemoapp/product-api-db:v0.0.11",
+      "name": "svc_hc_productapi",
+      "image": "hashicorpdemoapp/product-api:v0.0.11",
       "essential": true,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "app-logs",
           "awslogs-region": "${var.aws_region}",
-          "awslogs-stream-prefix": "svc_hc_postgres"
+          "awslogs-stream-prefix": "svc_hc_productapi"
         }
       },
       "environment": [
         {
-          "name": "POSTGRES_DB",
-          "value": "products"
-        },
+          "name": "CONFIG_FILE",
+          "value": "/etc/secrets/db-creds"
+        }
+      ],
+      "mountPoints" : [
         {
-          "name": "POSTGRES_USER",
-          "value": "postgres"
-        },
-        {
-          "name": "POSTGRES_PASSWORD",
-          "value": "password"
+          "containerPath" : "/etc/secrets/db-creds",
+          "sourceVolume" : "productapi",
+          "readOnly": true
         }
       ],
       "portMappings": [
         {
           "containerPort": 9090,
-          "hostPort": 9090,
           "protocol": "tcp"
         }
       ],
@@ -46,14 +44,14 @@ resource "aws_ecs_task_definition" "svc_hc_postgres" {
     },
     {
       "image": "ppresto/consul-ecs:1.9.3-1.16.0-5",
-      "name": "svc_hc_postgres-init",
+      "name": "svc_hc_productapi-init",
       "essential": false,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
           "awslogs-group": "app-logs",
           "awslogs-region": "${var.aws_region}",
-          "awslogs-stream-prefix": "svc_hc_postgres-init"
+          "awslogs-stream-prefix": "svc_hc_productapi-init"
         }
       },
       "portMappings": [
@@ -64,12 +62,16 @@ resource "aws_ecs_task_definition" "svc_hc_postgres" {
       ],
       "environment": [
           {
+              "name": "CONFIG_FILE",
+              "value": "/etc/secrets/db-creds"
+          },
+          {
               "name": "SERVICE_NAME",
-              "value": "postgres"
+              "value": "product-api"
           },
           {
               "name": "SERVICE_PORT",
-              "value": "5432"
+              "value": "9090"
           },
           {
               "name": "CONSUL_SERVICE",
@@ -77,66 +79,81 @@ resource "aws_ecs_task_definition" "svc_hc_postgres" {
           },
           {
               "name": "CONSUL_SERVICE_KV_PATH",
-              "value": "service/postgres/service.json"
+              "value": "service/product-api/service.json"
           }
       ]
     }
   ]
   DEFINITION
+
+  volume {
+    name = "productapi"
+    host_path = "/etc/secrets/db-creds"
+  }
+
 }
 
-resource "aws_ecs_service" "svc_hc_postgres" {
-  name            = "svc_hc_postgres"
+resource "aws_ecs_service" "svc_hc_productapi" {
+  name            = "svc_hc_productapi"
   cluster         = "${module.ecs-cluster.cluster_id}"
-  task_definition = "${aws_ecs_task_definition.svc_hc_postgres.arn}"
+  task_definition = "${aws_ecs_task_definition.svc_hc_productapi.arn}"
   launch_type     = "EC2"
   desired_count   = 1
-  # ECS doesn't deal with desired_count=1 for HA.  Setting health% to 0 for clean deployments
   deployment_minimum_healthy_percent = 0
 
   #network_configuration {
   #  subnets         = data.terraform_remote_state.vpc.outputs.public_subnets
   #  assign_public_ip = false
-  #  security_groups  = [data.terraform_remote_state.consul.outputs.consul_sg, aws_security_group.postgres.id]
+  #  security_groups  = [aws_security_group.consul_svc.id, aws_security_group.consul_ecs_lb.id]
   #}
+  depends_on = ["aws_ecs_task_definition.svc_hc_postgres"]
 }
 
-resource "consul_keys" "postgres" {
+resource "consul_keys" "product-api" {
   datacenter = var.aws_region
   token      = data.terraform_remote_state.consul.outputs.master_token
 
   # Set the CNAME of our load balancer as a key
   key {
-    path  = "service/postgres/service.json"
+    path  = "service/product-api/service.json"
     value    = <<VALUE
-    {
-    "service": {
-      "name": "postgres",
-      "id": "postgres",
-      "token": "",
-      "address": "CONTAINER_IP",
-      "port": 5432,
-      "tags": [
-        "ecs",
-        "postgres",
-        "dev"
-      ],
-      "meta": {
-        {{ range tree "service/postgres/metadata" }}
+    { "service":
+      { "name": "product-api",
+        "token": "",
+        "address": "CONTAINER_IP",
+        "port": 9090,
+        "tags": [
+          "ecs",
+          "product-api",
+          "dev"
+        ],
+        "meta": {
+        {{ range tree "service/product-api/metadata" }}
         "{{- .Key -}}":"{{- .Value -}}",
         {{ end }}
         "meta":"auto-generated-v1"
       },
-      "check": {
-        "id": "postgres",
-        "name": "Postgres TCP on port 5432",
-        "tcp": "CONTAINER_IP:5432",
-        "interval": "5s",
-        "timeout": "1s",
-        "DeregisterCriticalServiceAfter": "1m"
+        "checks": [
+          {
+              "id": "product-api-tcp-9090",
+              "name": "Product API - TCP 9090",
+              "tcp": "CONTAINER_IP:9090",
+              "interval": "10s",
+              "timeout": "1s",
+              "DeregisterCriticalServiceAfter": "1m"
+
+          },
+          {
+              "id": "product-api-http-9090",
+              "name": "Product API - HTTP 9090",
+              "http": "http://CONTAINER_IP:9090/coffees",
+              "tls_skip_verify": true,
+              "interval": "5s",
+              "timeout": "2s"
+          }
+        ]
       }
     }
-  }
-  VALUE
+    VALUE
   }
 }
