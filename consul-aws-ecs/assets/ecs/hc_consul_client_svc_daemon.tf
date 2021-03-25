@@ -88,7 +88,7 @@ resource "aws_ecs_service" "consul-client-svc" {
   cluster         = "${module.ecs-cluster.cluster_id}"
   task_definition = "${aws_ecs_task_definition.consul-client.arn}"
   scheduling_strategy = "DAEMON"
-  
+
   placement_constraints {
     type = "distinctInstance"
   }
