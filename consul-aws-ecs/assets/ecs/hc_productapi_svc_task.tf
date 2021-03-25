@@ -104,7 +104,7 @@ resource "aws_ecs_service" "svc_hc_productapi" {
   network_configuration {
     subnets         = data.terraform_remote_state.vpc.outputs.public_subnets
     assign_public_ip = false
-    security_groups  = [data.terraform_remote_state.consul.outputs.consul_sg, aws_security_group.postgres.id]
+    security_groups  = [data.terraform_remote_state.consul.outputs.consul_sg, module.ecs-cluster.sg_ecs_id, aws_security_group.postgres.id]
   }
   depends_on = ["aws_ecs_task_definition.svc_hc_postgres"]
 }

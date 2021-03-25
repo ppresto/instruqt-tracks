@@ -140,7 +140,7 @@ challenges:
     url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-consul.html
   - title: AWS Console
     type: service
-    hostname: vm
+    hostname: cloud-client
     path: /
     port: 80
   difficulty: basic
@@ -197,7 +197,7 @@ challenges:
     port: 8443
   - title: AWS Console
     type: service
-    hostname: vm
+    hostname: cloud-client
     path: /
     port: 80
   difficulty: basic
@@ -209,11 +209,16 @@ challenges:
   teaser: Use Terraform to provision an ECS Cluster and deploy Hashicups
   assignment: |-
     # my.auto.tfvars
-    In the Code Editor verify `my.auto.tfvars`
-    * consul_ecs_agent_image_name=<YOUR_DOCKER_REPOSITORY:TAG>
-    * cluster_name=<OPTIONAL_CUSTOM_NAME>
+    In the Code Editor update `my.auto.tfvars` with your image repo:tag.
+    ```
+    consul_ecs_agent_image_name=<YOUR_DOCKER_REPOSITORY:TAG>
+    ```
+    Optionally, update the `cluster_name` while you're here.
 
-    If you forgot your docker repo:tag you can run `docker images` to gather that information.
+    If you forgot your docker repo:tag run this commands.
+    ```
+    docker images --format "table {{.Repository}}:{{.Tag}}" | grep -v envoyproxy
+    ```
 
     # Provision the ECS Cluster
     Go to the Terminal tab and execute the following
@@ -229,7 +234,12 @@ challenges:
     * Copy the `Password` by clicking on the copy icon to the right and enter it into the Login page
 
     Once logged in bring up tabs for ECS, Cloudwatch, and anything else you want to monitor as the ECS cluster is provisioned and Hashicup services deployed.
-    To review all task logs in Cloudwatch go to Logs -> Log groups -> applogs.  Creating the ECS instance and deploying services usually takes a couple minutes so please be patient.
+
+    To review all task logs in Cloudwatch go to
+    ```
+    Logs -> Log groups -> applogs
+    ```
+    Creating the ECS instance and deploying services usually takes a couple minutes so please be patient.
 
     # Order coffee from Hashicups
     To go to the web application review the terraform output, look for the ALB URL for the frontend, and copy/paste in a new browser tab.
@@ -296,7 +306,7 @@ challenges:
     url: https://htmlpreview.github.io/?https://raw.githubusercontent.com/ppresto/instruqt-tracks/main/consul-aws-ecs/assets/diagrams/consul-aws-consul-ecs-ec2.html
   - title: AWS Console
     type: service
-    hostname: vm
+    hostname: cloud-client
     path: /
     port: 80
   difficulty: basic
@@ -388,4 +398,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "5185618225474447254"
+checksum: "11589041727805694685"

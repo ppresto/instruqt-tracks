@@ -1,6 +1,6 @@
 #!/bin/bash -l
 
-sleep 10
+sleep 60
 #path
 #echo "export PATH=/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" >> ~/.bashrc
 
