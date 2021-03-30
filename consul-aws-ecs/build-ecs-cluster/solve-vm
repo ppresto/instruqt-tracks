@@ -7,4 +7,10 @@ cd /root/aws/ecs
 terraform init
 terraform apply -auto-approve > output.txt
 
+if [[ $(terraform output alb_hc_frontend| grep "amazonaws.com") ]]; then
+    until curl -s $(terraform output alb_hc_frontend); do
+        echo "Waiting for frontend service to be available..."
+        sleep 5
+    done
+fi
 exit 0

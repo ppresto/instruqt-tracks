@@ -6,11 +6,7 @@ if [ -f /tmp/skip-check ]; then
 fi
 
 cd /root/aws/ecs
-if [[ $(terraform output alb_hc_frontend) ]]; then
-    until curl -s $(terraform output alb_hc_frontend); do
-        echo "Waiting for frontend service to be available..."
-        sleep 2
-    done
+if [[ $(terraform output alb_hc_frontend| grep "amazonaws.com") ]]; then
     exit 0
 else
     exit 1
