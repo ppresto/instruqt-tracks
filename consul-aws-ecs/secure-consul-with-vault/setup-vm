@@ -1,0 +1,62 @@
+#!/bin/bash -l
+sleep 30
+
+set-workdir /root/aws/vault
+
+#cd /root/terraform/vault
+#terraform init
+#terraform apply -auto-approve
+#sleep 60
+
+#inital vault
+vault_lb=$(terraform output -state /root/aws/vault/terraform.tfstate lb)
+export VAULT_ADDR=http://${vault_lb}
+master_token=$(terraform output -state /root/aws/consul/terraform.tfstate master_token)
+agent_server_token=$(terraform output -state /root/aws/consul/terraform.tfstate agent_server_token)
+gossip_key=$(terraform output -state /root/aws/consul/terraform.tfstate gossip_key)
+snapshot_token=$(terraform output -state /root/aws/consul/terraform.tfstate snapshot_token)
+
+vault login root
+vault kv put secret/consul master_token=${master_token} agent_server_token=${agent_server_token} snapshot_token=${snapshot_token} gossip_key=${gossip_key}
+
+vault auth enable userpass
+vault write auth/userpass/users/operations password=Password1 policies=ops token_ttl=8h
+vault write auth/userpass/users/backend password=Password1 policies=backend token_ttl=30m
+vault write auth/userpass/users/frontend password=Password1 policies=frontend token_ttl=30m
+vault secrets enable consul
+
+echo 'path "secret/*" {
+  capabilities = ["list"]
+}
+path "secret/data/consul" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+path "consul/*"
+{
+  capabilities = ["create", "read", "update", "delete"]
+}' | vault policy write ops -
+
+echo 'path "consul/creds/backend-developer"
+{
+  capabilities = ["read"]
+}' | vault policy write backend -
+
+echo 'path "consul/creds/frontend-developer"
+{
+  capabilities = ["read"]
+}' | vault policy write frontend -
+
+unset VAULT_TOKEN
+exit 0
+
+
+# Set Consul Env
+CONSUL_URL=$(terraform output -state=/root/aws/consul/terraform.tfstate dns_name)
+export CONSUL_HTTP_ADDR=${CONSUL_URL}
+
+sed -i "s/\/root\/aws.*/\/root\/aws/" /etc/systemd/system/code-server.service
+systemctl daemon-reload
+systemctl restart code-server
+
+
+exit 0

@@ -1,7 +1,6 @@
-slug: consul-aws-ecs-poc-shutterfly
-id: zvext88xquvg
+slug: consul-aws-ecs-poc-shutterfly-acl
 type: track
-title: Consul on AWS - Shutterfly POC
+title: Consul on AWS - Shutterfly POC - ACL
 teaser: Use Consul's central service registry and discovery for services running on
   ECS and EC2.
 description: |-
@@ -28,7 +27,6 @@ published: true
 show_timer: true
 challenges:
 - slug: provision-consul
-  id: fpxgdsgcsift
   type: challenge
   title: Provision infrastructure with Terraform
   teaser: Create an immutable Consul architecture from scratch.  Using Packer and
@@ -160,7 +158,6 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: build-consul-ecs-agent
-  id: 5rr7amytnt9z
   type: challenge
   title: Build a Consul service registration sidecar container
   teaser: Build a sidecar container that can support both service discovery and service
@@ -226,7 +223,6 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: build-ecs-cluster
-  id: xrevzlxykdef
   type: challenge
   title: Provision ECS Cluster on EC2
   teaser: Use Terraform to provision an ECS Cluster and deploy Hashicups
@@ -365,7 +361,6 @@ challenges:
   difficulty: basic
   timelimit: 1800
 - slug: sandbox
-  id: vfxi1zedjosm
   type: challenge
   title: Consul Sanbox
   teaser: Use this sandbox to test various Consul use cases.
@@ -458,4 +453,3 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "18260531361099212927"
