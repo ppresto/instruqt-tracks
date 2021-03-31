@@ -10,7 +10,7 @@ LOCAL_IPV4=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`
 
 echo "Installing pre-requisites...."
 apt-get update
-apt-get install jq unzip wget -y
+apt-get install jq unzip wget docker.io -y
 
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
@@ -124,3 +124,35 @@ cat <<PROFILE | sudo tee /etc/profile.d/consul.sh
 export CONSUL_ADDR=http://127.0.0.1:8500
 export CONSUL_HTTP_TOKEN=c1c8dd28-ba9c-7bd0-edde-b63962b736b2
 PROFILE
+
+#
+### Install and Run Vault
+#
+echo "installing vault..."
+cd /tmp && {
+    if [[ ! -f vault_1.6.3_linux_amd64.zip ]]; then
+        curl -O https://releases.hashicorp.com/vault/1.6.3/vault_1.6.3_linux_amd64.zip
+        mv vault_1.6.3_linux_amd64.zip vault.zip
+    fi
+    unzip -qq "vault.zip"
+    sudo mv "vault" "/usr/local/bin/vault"
+    sudo chmod +x "/usr/local/bin/vault"
+    rm -rf "vault.zip"
+  }
+
+curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+
+cat <<-EOF > /docker-compose.yml
+version: '3'
+services:
+  vault:
+    container_name: vault
+    network_mode: host
+    restart: always
+    image: vault
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=root
+EOF
+
+/usr/local/bin/docker-compose up -d

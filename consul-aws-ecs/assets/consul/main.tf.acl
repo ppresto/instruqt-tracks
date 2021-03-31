@@ -57,5 +57,5 @@ module "consul_tls" {
   source            = "./modules/tls-self-signed"
   consul_datacenter = var.aws_region
   environment_name  = module.consul.env
-  dns_names         = [aws_lb.consul.dns_name,"server.${var.aws_region}.consul", "localhost"]
+  dns_names         = [module.consul.dns_name,"server.${var.aws_region}.consul", "localhost"]
 }

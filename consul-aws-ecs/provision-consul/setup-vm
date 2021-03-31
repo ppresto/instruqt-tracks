@@ -51,13 +51,22 @@ mkdir -p /root/aws
 set-workdir /root/aws
 cd /root/aws
 echo "cloning assets..."
-git clone https://github.com/ppresto/instruqt-tracks.git
+git clone -b acl https://github.com/ppresto/instruqt-tracks.git
+#git clone https://github.com/ppresto/instruqt-tracks.git
 cp -r instruqt-tracks/consul-aws-ecs/assets/consul .
 cp -r instruqt-tracks/consul-aws-ecs/assets/packer .
 cp -r instruqt-tracks/consul-aws-ecs/assets/vpc .
 cp -r instruqt-tracks/consul-aws-ecs/assets/ecs .
 cp -r instruqt-tracks/consul-aws-ecs/assets/consul-ecs-agent .
+cp -r instruqt-tracks/consul-aws-ecs/assets/vault .
 rm -rf instruqt-tracks
+
+##################
+# testing - Remove this section...
+mv /root/aws/consul/main.tf.acl /root/aws/consul/main.tf
+mv /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl.acl /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl
+##################
+
 
 # create image
 cd /root/aws/packer/consul
