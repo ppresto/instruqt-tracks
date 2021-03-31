@@ -8,4 +8,11 @@ env >> output.txt
 terraform init
 terraform apply -auto-approve >> output.txt
 
+if [[ $(terraform output dns_name| grep "amazonaws.com") ]]; then
+    until curl -s -m 5 $(terraform output dns_name); do
+        echo "Waiting for frontend service to be available..."
+        sleep 5
+    done
+fi
+
 exit 0

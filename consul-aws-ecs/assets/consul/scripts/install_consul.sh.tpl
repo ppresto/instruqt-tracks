@@ -72,6 +72,12 @@ ui                  = true
 retry_join          = ["provider=aws tag_key=Environment-Name tag_value=${environment_name}"]
 EOF
 
+%{ if gossip_key != null }
+cat << EOF > /etc/consul.d/encrypt_gossip.hcl
+encrypt = "${gossip_key}"
+EOF
+%{ endif }
+
 # Create Service Registration
 echo '{
   "service": {
@@ -122,28 +128,31 @@ systemctl start consul
 echo "Setup Consul profile"
 cat <<PROFILE | sudo tee /etc/profile.d/consul.sh
 export CONSUL_ADDR=http://127.0.0.1:8500
-export CONSUL_HTTP_TOKEN=c1c8dd28-ba9c-7bd0-edde-b63962b736b2
+export CONSUL_HTTP_TOKEN=${master_token}
 PROFILE
 
 #
-### Install and Run Vault
+### Install Vault CLI
 #
 echo "installing vault..."
 cd /tmp && {
-    if [[ ! -f vault_1.6.3_linux_amd64.zip ]]; then
-        curl -O https://releases.hashicorp.com/vault/1.6.3/vault_1.6.3_linux_amd64.zip
-        mv vault_1.6.3_linux_amd64.zip vault.zip
-    fi
-    unzip -qq "vault.zip"
-    sudo mv "vault" "/usr/local/bin/vault"
-    sudo chmod +x "/usr/local/bin/vault"
-    rm -rf "vault.zip"
-  }
+  if [[ ! -f vault_1.6.3_linux_amd64.zip ]]; then
+      curl -O https://releases.hashicorp.com/vault/1.6.3/vault_1.6.3_linux_amd64.zip
+      mv vault_1.6.3_linux_amd64.zip vault.zip
+  fi
+  unzip -qq "vault.zip"
+  sudo mv "vault" "/usr/local/bin/vault"
+  sudo chmod +x "/usr/local/bin/vault"
+  rm -rf "vault.zip"
+}
 
-curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+#
+### Run Vault Server using docker-compose
+#
+sudo curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 
-cat <<-EOF > /docker-compose.yml
+sudo cat <<-EOF > /docker-compose.yml
 version: '3'
 services:
   vault:

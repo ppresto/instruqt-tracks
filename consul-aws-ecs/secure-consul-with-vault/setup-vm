@@ -1,15 +1,10 @@
 #!/bin/bash -l
 sleep 30
 
-set-workdir /root/aws/vault
-
-#cd /root/terraform/vault
-#terraform init
-#terraform apply -auto-approve
-#sleep 60
+set-workdir /root/aws/consul
 
 #inital vault
-vault_lb=$(terraform output -state /root/aws/vault/terraform.tfstate lb)
+vault_lb=$(terraform output -state /root/aws/consul/terraform.tfstate vault_url)
 export VAULT_ADDR=http://${vault_lb}
 master_token=$(terraform output -state /root/aws/consul/terraform.tfstate master_token)
 agent_server_token=$(terraform output -state /root/aws/consul/terraform.tfstate agent_server_token)
@@ -47,16 +42,18 @@ echo 'path "consul/creds/frontend-developer"
 }' | vault policy write frontend -
 
 unset VAULT_TOKEN
-exit 0
 
 
 # Set Consul Env
-CONSUL_URL=$(terraform output -state=/root/aws/consul/terraform.tfstate dns_name)
-export CONSUL_HTTP_ADDR=${CONSUL_URL}
+echo "Setup Consul profile"
+cat <<PROFILE | sudo tee /etc/profile.d/consul.sh
+export CONSUL_HTTP_ADDR=$(terraform output -state /root/aws/consul/terraform.tfstate dns_name)
+export CONSUL_HTTP_TOKEN=$(terraform output -state /root/aws/consul/terraform.tfstate master_token)
+export VAULT_ADDR=http://${vault_lb}
+PROFILE
 
-sed -i "s/\/root\/aws.*/\/root\/aws/" /etc/systemd/system/code-server.service
+sed -i "s/\/root\/aws.*/\/root\/aws\/consul/" /etc/systemd/system/code-server.service
 systemctl daemon-reload
 systemctl restart code-server
-
 
 exit 0

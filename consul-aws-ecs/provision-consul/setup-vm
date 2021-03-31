@@ -4,6 +4,8 @@ set -e
 # wait for AWS Credentials
 sleep 10
 
+CONSUL_VER=1.8.0
+
 #install terraform
 cd /tmp
 echo "installing terraform..."
@@ -39,13 +41,35 @@ Host *
     StrictHostKeyChecking no
 EOF
 
-#install vault
-#cd /tmp
-#echo "installing vault..."
-#curl -O https://releases.hashicorp.com/vault/1.6.3/vault_1.6.3_linux_amd64.zip
-#unzip *.zip
-#mv vault /usr/local/bin/vault
-#rm -f *.zip
+#
+### Install Consul CLI
+#
+echo "installing consul..."
+cd /tmp && {
+    if [[ ! -f consul_${CONSUL_VER}+ent_linux_amd64.zip ]]; then
+        curl -O https://releases.hashicorp.com/consul/${CONSUL_VER}+ent/consul_${CONSUL_VER}+ent_linux_amd64.zip
+        mv consul_${CONSUL_VER}+ent_linux_amd64.zip consul.zip
+    fi
+    unzip -qq "consul.zip"
+    sudo mv "consul" "/usr/local/bin/consul"
+    sudo chmod +x "/usr/local/bin/consul"
+    rm -rf "consul.zip"
+  }
+
+#
+### Install Vault
+#
+echo "installing vault..."
+cd /tmp && {
+    if [[ ! -f vault_1.6.3_linux_amd64.zip ]]; then
+        curl -O https://releases.hashicorp.com/vault/1.6.3/vault_1.6.3_linux_amd64.zip
+        mv vault_1.6.3_linux_amd64.zip vault.zip
+    fi
+    unzip -qq "vault.zip"
+    sudo mv "vault" "/usr/local/bin/vault"
+    sudo chmod +x "/usr/local/bin/vault"
+    rm -rf "vault.zip"
+  }
 
 mkdir -p /root/aws
 set-workdir /root/aws
@@ -64,6 +88,7 @@ rm -rf instruqt-tracks
 ##################
 # testing - Remove this section...
 mv /root/aws/consul/main.tf.acl /root/aws/consul/main.tf
+mv /root/aws/consul/ec2.tf.encrypt_gossip /root/aws/consul/ec2.tf
 mv /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl.acl /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl
 ##################
 

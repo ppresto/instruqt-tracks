@@ -111,7 +111,7 @@ locals {
     CONSUL_VER             = "1.8.0"
     environment_name       = "${module.consul.env}-consul"
     datacenter             = var.aws_region
-    #gossip_key             = module.consul.gossip_key
+    gossip_key             = module.consul.gossip_key
     master_token           = module.consul.master_token
   }
 }
