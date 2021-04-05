@@ -113,5 +113,7 @@ locals {
     datacenter             = var.aws_region
     gossip_key             = module.consul.gossip_key
     master_token           = module.consul.master_token
+    consul_url            = module.consul.dns_name
+    vault_url             = aws_lb.vault.dns_name
   }
 }

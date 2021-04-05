@@ -159,6 +159,64 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 7200
+- slug: secure-consul-with-vault
+  id: biluwxvwxrwx
+  type: challenge
+  title: Use Encryption and ACL's to secure Consul
+  teaser: Encrypt Gossip traffic and enable mTLS for cluster communication.  Enable
+    ACL's and service level policies to control what services are allowed to register.
+  assignment: |-
+    # Quick Reference
+    Application URL:
+    ```
+    cd /root/aws/ecs
+    terraform output alb_hc_frontend
+    ```
+    Consul URL
+    ```
+    cd /root/aws/consul
+    terraform output dns_name
+    ```
+    SSH EC2 bastion host
+    ```
+    cd /root/aws/consul
+    terraform output ec2_ip
+    ```
+
+    # Consul CLI
+    You can use consul as a CLI tool.  First setup your environment.
+    ```
+    CONSUL_URL=$(terraform output -state=/root/aws/consul/terraform.tfstate dns_name)
+    export CONSUL_HTTP_ADDR=${CONSUL_URL}
+    ```
+  notes:
+  - type: text
+    contents: |-
+      * Encrypt Gossip traffic to secure all client health checking and communitation
+      * Encrypt server to server traffic using mTLS certificates
+      * Enable the ACL system and create policies for each service to control registration and other actions
+      Note:  Use Hashicorp Vault to automate many of these tasks including rotating tokens and certificates.
+  tabs:
+  - title: Code Editor
+    type: service
+    hostname: vm
+    port: 8443
+  - title: Terminal-1
+    type: terminal
+    hostname: vm
+  - title: Terminal-2
+    type: terminal
+    hostname: vm
+  - title: Terminal-3
+    type: terminal
+    hostname: vm
+  - title: AWS Console
+    type: service
+    hostname: cloud-client
+    path: /
+    port: 80
+  difficulty: basic
+  timelimit: 1800
 - slug: build-consul-ecs-agent
   id: vdxlk7x7zsci
   type: challenge
@@ -458,4 +516,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "16393178388495003521"
+checksum: "7410146937763544044"

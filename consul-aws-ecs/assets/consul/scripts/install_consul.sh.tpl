@@ -72,7 +72,7 @@ ui                  = true
 retry_join          = ["provider=aws tag_key=Environment-Name tag_value=${environment_name}"]
 EOF
 
-%{ if gossip_key != null }
+%{ if gossip_key != "" }
 cat << EOF > /etc/consul.d/encrypt_gossip.hcl
 encrypt = "${gossip_key}"
 EOF
@@ -82,6 +82,7 @@ EOF
 echo '{
   "service": {
     "name": "ec2-bastion-svc",
+    "token": "${TOKEN}",
     "tags": [
       "service",
       "bastion",
@@ -94,7 +95,7 @@ echo '{
     },
     "port": 80
   }
-}' > /etc/consul.d/ec2-bastion-svc.json
+}' > /etc/consul.d/ec2-bastion-svc.json.ctmpl
 
 # Systemd Service
 cat << EOF > /tmp/consul.service
@@ -121,14 +122,14 @@ EOF
 
 sudo cp /tmp/consul.service /etc/systemd/system/
 sudo chmod 0664 /etc/systemd/system/consul.service
-
 systemctl enable consul
-systemctl start consul
 
 echo "Setup Consul profile"
 cat <<PROFILE | sudo tee /etc/profile.d/consul.sh
-export CONSUL_ADDR=http://127.0.0.1:8500
+export CONSUL_ADDR=${consul_url}
 export CONSUL_HTTP_TOKEN=${master_token}
+export VAULT_HTTP_ADDR=${vault_url}
+export VAULT_TOKEN="root"
 PROFILE
 
 #
@@ -164,4 +165,24 @@ services:
       - VAULT_DEV_ROOT_TOKEN_ID=root
 EOF
 
+#
+### Installing Consul Template
+#
+echo "installing consul-template..."
+cd /tmp && {
+  if [[ ! -f consul-template_0.25.2_linux_amd64.tgz ]]; then
+      curl -O https://releases.hashicorp.com/consul-template/0.25.2/consul-template_0.25.2_linux_amd64.tgz
+  fi
+  tar -zxf consul-template_0.25.2_linux_amd64.tgz
+  sudo mv consul-template /usr/local/bin/consul-template
+  sudo chmod 0755 /usr/local/bin/consul-template
+  rm consul-template_0.25.2_linux_amd64.tgz
+}
+
 /usr/local/bin/docker-compose up -d
+
+consul-template \
+-consul-addr "${consul_url}" \
+-vault-addr "${vault_url}" \
+-template "/etc/consul.d/ec2-bastion-svc.json.ctmpl:/etc/consul.d/ec2-bastion-svc.json" \
+-exec "systemctl start consul"

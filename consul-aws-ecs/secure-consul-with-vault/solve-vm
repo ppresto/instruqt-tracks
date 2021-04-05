@@ -9,6 +9,16 @@ vault write consul/config/access address="${CONSUL_HTTP_ADDR}" token=${vault_con
 
 consul acl policy create -name "ops" -description "admin policy for ops" -rules 'acl = "write" operator = "write" namespace_prefix "" {acl = "write"}'
 vault write consul/roles/ops policies=ops ttl=1h
+export CONSUL_HTTP_TOKEN=$(vault read -field token consul/creds/ops)
 
+mkdir -p /root/aws/policies
+cat << EOF > /root/aws/policies/generic-svc.hcl
+service_prefix "" {
+  policy = "write"
+}
+EOF
+
+consul acl policy create -name "vault-svc-policy" -description "vault" -rules @generic-svc.hcl
+vault kv patch secret/consul vault_svc_token=$(consul acl token create -description 'vault service' -policy-name 'vault-svc-policy' -format=json | jq -r .SecretID)
 
 exit 0

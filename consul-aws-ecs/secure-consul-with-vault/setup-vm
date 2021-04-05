@@ -52,7 +52,7 @@ export CONSUL_HTTP_TOKEN=$(terraform output -state /root/aws/consul/terraform.tf
 export VAULT_ADDR=http://${vault_lb}
 PROFILE
 
-sed -i "s/\/root\/aws.*/\/root\/aws\/consul/" /etc/systemd/system/code-server.service
+sed -i "s/\/root\/aws.*/\/root\/aws/" /etc/systemd/system/code-server.service
 systemctl daemon-reload
 systemctl restart code-server
 
