@@ -82,7 +82,7 @@ EOF
 echo '{
   "service": {
     "name": "ec2-bastion-svc",
-    "token": "${TOKEN}",
+    "token": "",
     "tags": [
       "service",
       "bastion",
@@ -95,7 +95,7 @@ echo '{
     },
     "port": 80
   }
-}' > /etc/consul.d/ec2-bastion-svc.json.ctmpl
+}' > /etc/consul.d/ec2-bastion-svc.json
 
 # Systemd Service
 cat << EOF > /tmp/consul.service
@@ -181,8 +181,8 @@ cd /tmp && {
 
 /usr/local/bin/docker-compose up -d
 
-consul-template \
--consul-addr "${consul_url}" \
--vault-addr "${vault_url}" \
--template "/etc/consul.d/ec2-bastion-svc.json.ctmpl:/etc/consul.d/ec2-bastion-svc.json" \
--exec "systemctl start consul"
+#consul-template \
+#-consul-addr "${consul_url}" \
+#-vault-addr "${vault_url}" \
+#-template "/etc/consul.d/ec2-bastion-svc.json.ctmpl:/etc/consul.d/ec2-bastion-svc.json" \
+#-exec "systemctl start consul"
