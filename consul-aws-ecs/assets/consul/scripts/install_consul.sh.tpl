@@ -78,6 +78,24 @@ encrypt = "${gossip_key}"
 EOF
 %{ endif }
 
+%{ if consul_ca_cert != "" }
+echo "${consul_ca_cert}" > /opt/consul/tls/ca-cert.pem
+
+cat << EOF > /etc/consul.d/tls.hcl
+#verify_incoming_rpc   = true
+verify_incoming        = false
+verify_outgoing        = true
+verify_server_hostname = true
+ca_file                = "/opt/consul/tls/ca-cert.pem"
+auto_encrypt {
+  tls = true
+}
+#ports {
+#  https = 8501
+#}
+EOF
+%{ endif }
+
 # Create Service Registration
 echo '{
   "service": {
@@ -186,3 +204,5 @@ cd /tmp && {
 #-vault-addr "${vault_url}" \
 #-template "/etc/consul.d/ec2-bastion-svc.json.ctmpl:/etc/consul.d/ec2-bastion-svc.json" \
 #-exec "systemctl start consul"
+
+systemctl start consul

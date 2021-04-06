@@ -16,9 +16,13 @@ cat << EOF > /root/aws/policies/generic-svc.hcl
 service_prefix "" {
   policy = "write"
 }
+node_prefix "ip-10-0-" {
+  policy = "write"
+}
 EOF
 
-consul acl policy create -name "vault-svc-policy" -description "vault" -rules @generic-svc.hcl
+consul acl policy create -name "vault-svc-policy" -description "vault" -rules @/root/aws/policies/generic-svc.hcl
 vault kv patch secret/consul vault_svc_token=$(consul acl token create -description 'vault service' -policy-name 'vault-svc-policy' -format=json | jq -r .SecretID)
+vault kv get -field="vault_svc_token" secret/consul
 
 exit 0
