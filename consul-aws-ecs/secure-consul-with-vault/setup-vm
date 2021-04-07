@@ -43,6 +43,53 @@ echo 'path "consul/creds/frontend-developer"
 
 unset VAULT_TOKEN
 
+vault login -method=userpass username=operations password=Password1
+
+export CONSUL_HTTP_TOKEN=$(vault kv get -field=master_token secret/consul)
+vault_consul_mgmt_token=$(consul acl token create -policy-name=global-management -description "vault mgmt" | grep SecretID | cut -d ":" -f2 | xargs)
+vault write consul/config/access address="${CONSUL_HTTP_ADDR}" token=${vault_consul_mgmt_token}
+
+
+consul acl policy create -name "ops" -description "admin policy for ops" -rules 'acl = "write" operator = "write" namespace_prefix "" {acl = "write"}'
+vault write consul/roles/ops policies=ops ttl=1h
+
+# Get dynamically generated "ops" consul token from Vault
+export CONSUL_HTTP_TOKEN=$(vault read -field token consul/creds/ops)
+
+# Setup Anonymous Policy
+echo '
+    node_prefix "" {
+      policy = "read"
+    }
+    session_prefix "" {
+      policy = "read"
+    }
+    agent_prefix "" {
+      policy = "read"
+    }
+    query_prefix "" {
+      policy = "read"
+    }
+    operator = "read"
+    namespace_prefix "" {
+      acl = "read"
+      intention = "read"
+      service_prefix "" {
+        policy = "read"
+      }
+      node_prefix "" {
+        policy = "read"
+      }
+    }' |  consul acl policy create -name anonymous -rules -
+    consul acl token update -id anonymous -policy-name anonymous
+
+mkdir -p /root/aws/policies
+cat << EOF > /root/aws/policies/svc-policy.hcl
+service_prefix "" {
+  policy = "write"
+}
+EOF
+
 
 # Set Consul Env
 echo "Setup Consul profile"
