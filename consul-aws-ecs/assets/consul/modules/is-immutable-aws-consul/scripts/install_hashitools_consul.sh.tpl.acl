@@ -31,7 +31,7 @@ performance {
 }%{ endif }
 EOF
 
-%{ if enable_gossip_encryption == true }
+%{ if enable_gossip_encryption }
 cat << EOF > /etc/consul.d/encrypt_gossip.hcl
 encrypt = "${gossip_key}"
 EOF
@@ -56,7 +56,7 @@ node_meta = {
     consul_cluster_version = "${consul_cluster_version}"
 }
 EOF
-%{ if enable_tls == true }
+%{ if enable_tls }
 echo "${consul_ca_cert}" > /opt/consul/tls/ca-cert.pem
 echo "${consul_cert}" > /opt/consul/tls/server-cert.pem
 echo "${consul_key}" > /opt/consul/tls/server-key.pem
@@ -93,7 +93,7 @@ ${jsonencode(consul_config)}
 EOF
 %{ endif }
 
-%{ if enable_acl_system == true }
+%{ if enable_acl_system }
 cat << EOF > /etc/consul.d/acl.hcl
 acl {
   enabled        = true

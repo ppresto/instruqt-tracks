@@ -72,7 +72,7 @@ ui                  = true
 retry_join          = ["provider=aws tag_key=Environment-Name tag_value=${environment_name}"]
 EOF
 
-%{ if agent_server_token != "" }
+%{ if enable_acl_system }
 cat << EOF > /etc/consul.d/acl.hcl
 acl = {
   enabled = true
@@ -85,13 +85,13 @@ acl = {
 EOF
 %{ endif }
 
-%{ if gossip_key != "" }
+%{ if enable_gossip_encryption }
 cat << EOF > /etc/consul.d/encrypt_gossip.hcl
 encrypt = "${gossip_key}"
 EOF
 %{ endif }
 
-%{ if consul_ca_cert != "" }
+%{ if enable_tls }
 echo "${consul_ca_cert}" > /opt/consul/tls/ca-cert.pem
 
 cat << EOF > /etc/consul.d/tls.hcl

@@ -133,6 +133,9 @@ locals {
     consul_ca_cert         = var.consul_tls_config.ca_cert
     consul_cert            = var.consul_tls_config.cert
     consul_key             = var.consul_tls_config.key
+    enable_tls               = var.enable_tls
+    enable_acl_system        = var.enable_acl_system
+    enable_gossip_encryption = var.enable_gossip_encryption
   }
 
   # Workaround for https://github.com/hashicorp/terraform-provider-aws/issues/14085
