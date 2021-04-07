@@ -29,13 +29,8 @@ limits {
 performance {
     raft_multiplier = 1
 }%{ endif }
-EOF
 
-%{ if enable_gossip_encryption }
-cat << EOF > /etc/consul.d/encrypt_gossip.hcl
-encrypt = "${gossip_key}"
 EOF
-%{ endif }
 
 cat << EOF > /etc/consul.d/autopilot.hcl
 autopilot {%{ if redundancy_zones }
@@ -56,28 +51,7 @@ node_meta = {
     consul_cluster_version = "${consul_cluster_version}"
 }
 EOF
-%{ if enable_tls }
-echo "${consul_ca_cert}" > /opt/consul/tls/ca-cert.pem
-echo "${consul_cert}" > /opt/consul/tls/server-cert.pem
-echo "${consul_key}" > /opt/consul/tls/server-key.pem
 
-cat << EOF > /etc/consul.d/tls.hcl
-verify_incoming_rpc    = true
-verify_outgoing        = true
-verify_server_hostname = true
-ca_file   = "/opt/consul/tls/ca-cert.pem"
-cert_file = "/opt/consul/tls/server-cert.pem"
-key_file  = "/opt/consul/tls/server-key.pem"
-auto_encrypt {
-  allow_tls = true
-}
-
-ports {
-  https = 8501
-}
-
-EOF
-%{ endif }
 
 %{ if enable_connect }
 cat << EOF > /etc/consul.d/connect.hcl
@@ -93,83 +67,16 @@ ${jsonencode(consul_config)}
 EOF
 %{ endif }
 
-%{ if enable_acl_system }
-cat << EOF > /etc/consul.d/acl.hcl
-acl {
-  enabled        = true
-  %{ if bootstrap }default_policy = "allow"%{ else }default_policy = "allow"%{ endif }
-  enable_token_persistence = true
-  tokens {
-    master = "${master_token}"%{ if !bootstrap }
-    agent  = "${agent_server_token}"%{ endif }
-  }
-}
-EOF
-%{ endif }
 
 %{ if bootstrap }
 cat << EOF > /tmp/bootstrap_tokens.sh
 #!/bin/bash
 export CONSUL_HTTP_TOKEN=${master_token}
-echo "Creating Consul ACL policies......"
-if ! consul kv get acl_bootstrap 2>/dev/null; then
-  consul kv put  acl_bootstrap 1
-
-  echo '
-  node_prefix "" {
-    policy = "write"
-  }
-  service_prefix "" {
-    policy = "read"
-  }
-  service "consul" {
-    policy = "write"
-  }
-  agent_prefix "" {
-    policy = "write"
-  }' | consul acl policy create -name consul-agent-server -rules -
-
-  echo '
-  acl = "write"
-  key "consul-snapshot/lock" {
-  policy = "write"
-  }
-  session_prefix "" {
-  policy = "write"
-  }
-  service "consul-snapshot" {
-  policy = "write"
-  }' | consul acl policy create -name snapshot_agent -rules -
-
-  echo '
-  node_prefix "" {
-    policy = "read"
-  }
-  service_prefix "" {
-    policy = "read"
-  }
-  session_prefix "" {
-    policy = "read"
-  }
-  agent_prefix "" {
-    policy = "read"
-  }
-  query_prefix "" {
-    policy = "read"
-  }
-  operator = "read"' |  consul acl policy create -name anonymous -rules -
-
-  consul acl token create -description "consul agent server token" -policy-name consul-agent-server -secret "${agent_server_token}" 1>/dev/null
-  consul acl token create -description "consul snapshot agent" -policy-name snapshot_agent -secret "${snapshot_token}" 1>/dev/null
-  consul acl token update -id anonymous -policy-name anonymous 1>/dev/null
-else
-  echo "Bootstrap already completed"
-fi
 EOF
 
 chmod 700 /tmp/bootstrap_tokens.sh
-%{ endif }
 
+%{ endif }
 %{ if enable_snapshots }
 cat << EOF > /etc/consul-snapshot.d/consul-snapshot.json
 {
@@ -246,10 +153,9 @@ until [[ $LEADER -eq 1 ]]; do
     sleep 2
 done
 
-%{ if enable_acl_system == true }
-%{ if bootstrap }/tmp/bootstrap_tokens.sh%{ endif }
-%{ endif }
-
+#
+#%{ if bootstrap }/tmp/bootstrap_tokens.sh%{ endif }
+#
 echo "$INSTANCE_ID determined all nodes to be healthy and ready to go <3"
 
 %{ if enable_snapshots }

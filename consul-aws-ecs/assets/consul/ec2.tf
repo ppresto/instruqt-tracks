@@ -111,7 +111,14 @@ locals {
     CONSUL_VER             = "1.8.0"
     environment_name       = "${module.consul.env}-consul"
     datacenter             = var.aws_region
-    #gossip_key             = module.consul.gossip_key
+    consul_ca_cert         = module.consul_tls.consul_tls_config.ca_cert
+    gossip_key             = module.consul.gossip_key
     master_token           = module.consul.master_token
+    agent_server_token     = module.consul.agent_server_token
+    consul_url            = module.consul.dns_name
+    vault_url             = aws_lb.vault.dns_name
+    enable_tls               = var.enable_tls
+    enable_acl_system        = var.enable_acl_system
+    enable_gossip_encryption = var.enable_gossip_encryption
   }
 }

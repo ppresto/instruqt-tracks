@@ -166,12 +166,82 @@ challenges:
   teaser: Encrypt Gossip traffic and enable mTLS for cluster communication.  Enable
     ACL's and service level policies to control what services are allowed to register.
   assignment: |-
+    The Consul bootstrap outputs from the last few assignments have been secured in Vault through the provisioning process. <br>
+
+    Login as an operator and inspect the credentials. <br>
+
+    ```
+    vault login -method=userpass username=operations password=Password1
+    ```
+
+    Now inspect the credentials.
+
+    ```
+    vault kv get secret/consul
+    ```
+
+    You can use the master token to create a management token for Vault to issue [dynamic secrets](https://www.vaultproject.io/docs/secrets/consul/) for Consul.
+
+    Get a management token for Vault to manage Consul tokens with.
+    You can retrieve the privileged token for this operation from Vault.  <br>
+
+    ```
+    export CONSUL_HTTP_TOKEN=$(vault kv get -field=master_token secret/consul)
+    vault_consul_mgmt_token=$(consul acl token create -policy-name=global-management -description "vault mgmt" | grep SecretID | cut -d ":" -f2 | xargs)
+    ```
+
+    Now configure the secrets engine.
+
+    ```
+    vault write consul/config/access address=${CONSUL_HTTP_ADDR} token=${vault_consul_mgmt_token}
+    vault read consul/config/access
+    ```
+
+    Last, create a policy for the operations team, and link it to the Vault role.
+
+    ```
+    consul acl policy create -name "ops" -description "admin policy for ops" -rules 'acl = "write" operator = "write" namespace_prefix "" {acl = "write"}'
+    vault write consul/roles/ops policies=ops ttl=1h
+    ```
+
+    Now you are ready to get a dynamic Consul token from Vault for an operator.
+    Validate the token after you fetch it. <br>
+
+    ```
+    export CONSUL_HTTP_TOKEN=$(vault read -field token consul/creds/ops)
+    consul acl token read -self
+    ```
+
+    You can use this token to set up the anonymous policy.
+    ```
+    echo '
+    node_prefix "" {
+      policy = "read"
+    }
+    session_prefix "" {
+      policy = "read"
+    }
+    agent_prefix "" {
+      policy = "read"
+    }
+    query_prefix "" {
+      policy = "read"
+    }
+    operator = "read"
+    namespace_prefix "" {
+      acl = "read"
+      intention = "read"
+      service_prefix "" {
+        policy = "read"
+      }
+      node_prefix "" {
+        policy = "read"
+      }
+    }' |  consul acl policy create -name anonymous -rules -
+    consul acl token update -id anonymous -policy-name anonymous
+    ```
+    
     # Quick Reference
-    Application URL:
-    ```
-    cd /root/aws/ecs
-    terraform output alb_hc_frontend
-    ```
     Consul URL
     ```
     cd /root/aws/consul
@@ -188,6 +258,18 @@ challenges:
     ```
     CONSUL_URL=$(terraform output -state=/root/aws/consul/terraform.tfstate dns_name)
     export CONSUL_HTTP_ADDR=${CONSUL_URL}
+    ```
+
+    # Upgrades
+    Copy terraform.tfvars.v2 to terraform.tfvars to enable security.
+    ```
+    cp terraform.tfvars.v2 terraform.tfvars
+    terraform apply -auto-approve
+    ```
+
+    In one of the other terminal windows, you can watch the new servers transition in real time
+    ```
+    watch 'consul operator raft list-peers ; consul catalog nodes --detailed'
     ```
   notes:
   - type: text

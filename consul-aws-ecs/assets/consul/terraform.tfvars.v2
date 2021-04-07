@@ -1,10 +1,20 @@
 # Test Immutable Upgrade with new consul version
 aws_region = "us-west-2"
+ami_owner     = "ppresto@hashicorp.com"
+key_name    = "instruqt"
+name_prefix = "instruqt"
 consul_nodes = 3
-bootstrap = false
 
-#increment cluster version based on change.
+#Increment cluster version based on change.  This param is used by Consul autopilot and the ASG.
 consul_cluster_version = "0.0.2"
 
-#increment ami version if applicable
-ami_release = "0.0.2"
+#Increment ami version for an upgrade
+#ami_release = "0.0.2"
+ami_release = "0.0.1"
+
+# Enable Encryption, TLS, and the ACL System to secure consul
+enable_tls = true
+enable_acl_system = true
+enable_gossip_encryption = true
+# set default policy from "allow" to "deny" after all ACL policies and tokens are created
+acl_system_default_policy = "allow"

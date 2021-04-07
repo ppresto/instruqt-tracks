@@ -87,9 +87,9 @@ rm -rf instruqt-tracks
 
 ##################
 # testing - Remove this section...
-mv /root/aws/consul/main.tf.acl /root/aws/consul/main.tf
-mv /root/aws/consul/ec2.tf.encrypt_gossip /root/aws/consul/ec2.tf
-mv /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl.acl /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl
+#mv /root/aws/consul/main.tf.acl /root/aws/consul/main.tf
+#mv /root/aws/consul/ec2.tf.encrypt_gossip /root/aws/consul/ec2.tf
+#mv /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl.acl /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl
 ##################
 
 

@@ -123,7 +123,6 @@ locals {
     consul_cluster_version = var.consul_cluster_version
     asg_name               = "${random_id.environment_name.hex}-consul-${var.consul_cluster_version}"
     redundancy_zones       = var.redundancy_zones
-    bootstrap              = var.bootstrap
     enable_connect         = var.enable_connect
     performance_mode       = var.performance_mode
     enable_snapshots       = var.enable_snapshots
@@ -136,6 +135,7 @@ locals {
     enable_tls               = var.enable_tls
     enable_acl_system        = var.enable_acl_system
     enable_gossip_encryption = var.enable_gossip_encryption
+    acl_system_default_policy = var.acl_system_default_policy
   }
 
   # Workaround for https://github.com/hashicorp/terraform-provider-aws/issues/14085

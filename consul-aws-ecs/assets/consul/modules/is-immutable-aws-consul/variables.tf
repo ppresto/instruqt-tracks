@@ -157,6 +157,10 @@ variable "enable_acl_system" {
   description  = "Enable ACL system"
   default      = false
 }
+variable "acl_system_default_policy" {
+  description  = "Enable ACL system"
+  default      = "allow"
+}
 variable "enable_tls" {
   description  = "Enable ACL system"
   default      = false
