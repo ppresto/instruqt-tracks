@@ -240,7 +240,7 @@ challenges:
     }' |  consul acl policy create -name anonymous -rules -
     consul acl token update -id anonymous -policy-name anonymous
     ```
-    
+
     # Quick Reference
     Consul URL
     ```
@@ -598,4 +598,4 @@ challenges:
     port: 80
   difficulty: basic
   timelimit: 1800
-checksum: "4000314020688607153"
+checksum: "4541033402816909399"

@@ -20,11 +20,6 @@ variable "ami_owner" {
   description = "AMI owner to target in the filter"
 }
 
-variable "bootstrap" {
-  type        = bool
-  description = "Initial bootstrap configurations"
-}
-
 variable "extra_config" {
   description = "HCL Object with additional configuration overrides supplied to the consul servers."
   default     = {}

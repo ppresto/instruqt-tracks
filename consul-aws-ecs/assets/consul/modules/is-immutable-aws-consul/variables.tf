@@ -1,9 +1,3 @@
-variable "bootstrap" {
-  type        = bool
-  default     = true
-  description = "Initial Bootstrap configurations"
-}
-
 variable "redundancy_zones" {
   type        = bool
   default     = false
