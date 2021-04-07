@@ -46,8 +46,11 @@ module "consul" {
   # This is the owner tag on EC2 instance
   owner = var.ami_owner
   ttl   = "-1"
-
   additional_security_group_ids = [aws_security_group.consul_ssh.id, aws_security_group.consul_lb.id]
+
+  enable_tls = var.enable_tls
+  enable_acl_system = var.enable_acl_system
+  enable_gossip_encryption = var.enable_gossip_encryption
 
   consul_tls_config = module.consul_tls.consul_tls_config
 

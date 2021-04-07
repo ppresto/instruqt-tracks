@@ -56,3 +56,16 @@ variable "ssh_cidr_block" {
   #default      = ["0.0.0.0/0"]
   default      = ["0.0.0.0/0"]
 }
+
+variable "enable_gossip_encryption" {
+  description  = "Encrypt all gossip traffic with secret token"
+  default      = false
+}
+variable "enable_acl_system" {
+  description  = "Enable ACL system"
+  default      = false
+}
+variable "enable_tls" {
+  description  = "Enable ACL system"
+  default      = false
+}

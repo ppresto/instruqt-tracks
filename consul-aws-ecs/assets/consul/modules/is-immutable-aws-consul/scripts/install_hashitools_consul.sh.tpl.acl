@@ -29,19 +29,13 @@ limits {
 performance {
     raft_multiplier = 1
 }%{ endif }
+EOF
 
-acl {
-  enabled        = true
-  %{ if bootstrap }default_policy = "allow"%{ else }default_policy = "allow"%{ endif }
-  enable_token_persistence = true
-  tokens {
-    master = "${master_token}"%{ if !bootstrap }
-    agent  = "${agent_server_token}"%{ endif }
-  }
-}
-
+%{ if enable_gossip_encryption == true }
+cat << EOF > /etc/consul.d/encrypt_gossip.hcl
 encrypt = "${gossip_key}"
 EOF
+%{ endif }
 
 cat << EOF > /etc/consul.d/autopilot.hcl
 autopilot {%{ if redundancy_zones }
@@ -62,7 +56,7 @@ node_meta = {
     consul_cluster_version = "${consul_cluster_version}"
 }
 EOF
-%{ if consul_key != "" }
+%{ if enable_tls == true }
 echo "${consul_ca_cert}" > /opt/consul/tls/ca-cert.pem
 echo "${consul_cert}" > /opt/consul/tls/server-cert.pem
 echo "${consul_key}" > /opt/consul/tls/server-key.pem
@@ -99,6 +93,19 @@ ${jsonencode(consul_config)}
 EOF
 %{ endif }
 
+%{ if enable_acl_system == true }
+cat << EOF > /etc/consul.d/acl.hcl
+acl {
+  enabled        = true
+  %{ if bootstrap }default_policy = "allow"%{ else }default_policy = "allow"%{ endif }
+  enable_token_persistence = true
+  tokens {
+    master = "${master_token}"%{ if !bootstrap }
+    agent  = "${agent_server_token}"%{ endif }
+  }
+}
+EOF
+%{ endif }
 
 %{ if bootstrap }
 cat << EOF > /tmp/bootstrap_tokens.sh
@@ -239,8 +246,9 @@ until [[ $LEADER -eq 1 ]]; do
     sleep 2
 done
 
-
+%{ if enable_acl_system == true }
 %{ if bootstrap }/tmp/bootstrap_tokens.sh%{ endif }
+%{ endif }
 
 echo "$INSTANCE_ID determined all nodes to be healthy and ready to go <3"
 

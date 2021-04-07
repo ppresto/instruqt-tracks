@@ -148,3 +148,16 @@ variable "consul_tls_config" {
   }
   description = "Object containing the server TLS config to inject"
 }
+
+variable "enable_gossip_encryption" {
+  description  = "Encrypt all gossip traffic with secret token"
+  default      = false
+}
+variable "enable_acl_system" {
+  description  = "Enable ACL system"
+  default      = false
+}
+variable "enable_tls" {
+  description  = "Enable ACL system"
+  default      = false
+}
