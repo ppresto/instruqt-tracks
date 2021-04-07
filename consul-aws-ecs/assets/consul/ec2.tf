@@ -44,7 +44,7 @@ resource "aws_instance" "ec2-vault-svcs" {
   iam_instance_profile        = aws_iam_instance_profile.ec2_profile.name
   user_data                   = templatefile("${path.module}/scripts/install_consul.sh.tpl", local.install_ec2_tpl)
   tags = {
-    Name = "Vault"
+    Name  = "Vault"
     Owner = "ppresto"
   }
 }
@@ -108,15 +108,15 @@ resource "aws_lb_target_group_attachment" "vault" {
 
 locals {
   install_ec2_tpl = {
-    CONSUL_VER             = "1.8.0"
-    environment_name       = "${module.consul.env}-consul"
-    datacenter             = var.aws_region
-    consul_ca_cert         = module.consul_tls.consul_tls_config.ca_cert
-    gossip_key             = module.consul.gossip_key
-    master_token           = module.consul.master_token
-    agent_server_token     = module.consul.agent_server_token
-    consul_url            = module.consul.dns_name
-    vault_url             = aws_lb.vault.dns_name
+    CONSUL_VER               = "1.8.0"
+    environment_name         = "${module.consul.env}-consul"
+    datacenter               = var.aws_region
+    consul_ca_cert           = module.consul_tls.consul_tls_config.ca_cert
+    gossip_key               = module.consul.gossip_key
+    master_token             = module.consul.master_token
+    agent_server_token       = module.consul.agent_server_token
+    consul_url               = module.consul.dns_name
+    vault_url                = aws_lb.vault.dns_name
     enable_tls               = var.enable_tls
     enable_acl_system        = var.enable_acl_system
     enable_gossip_encryption = var.enable_gossip_encryption

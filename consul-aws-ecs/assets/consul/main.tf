@@ -16,10 +16,10 @@ data "aws_availability_zones" "available" {
 }
 
 module "consul" {
-  source = "./modules/is-immutable-aws-consul"
-  ami_owner     = var.ami_owner
-  instance_type = "t3.large"
-  ami_release   = var.ami_release
+  source                 = "./modules/is-immutable-aws-consul"
+  ami_owner              = var.ami_owner
+  instance_type          = "t3.large"
+  ami_release            = var.ami_release
   consul_cluster_version = var.consul_cluster_version
 
   enable_connect = true
@@ -29,7 +29,7 @@ module "consul" {
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
   subnets     = data.terraform_remote_state.vpc.outputs.public_subnets
 
-  region      = var.aws_region
+  region = var.aws_region
   availability_zones = [
     data.aws_availability_zones.available.names[0],
     data.aws_availability_zones.available.names[1],
@@ -43,14 +43,14 @@ module "consul" {
   performance_mode = false
   enable_snapshots = true
   # This is the owner tag on EC2 instance
-  owner = var.ami_owner
-  ttl   = "-1"
+  owner                         = var.ami_owner
+  ttl                           = "-1"
   additional_security_group_ids = [aws_security_group.consul_ssh.id, aws_security_group.consul_lb.id]
 
-  enable_tls = var.enable_tls
-  enable_acl_system = var.enable_acl_system
+  enable_tls                = var.enable_tls
+  enable_acl_system         = var.enable_acl_system
   acl_system_default_policy = var.acl_system_default_policy
-  enable_gossip_encryption = var.enable_gossip_encryption
+  enable_gossip_encryption  = var.enable_gossip_encryption
 
   consul_tls_config = module.consul_tls.consul_tls_config
 
@@ -60,5 +60,5 @@ module "consul_tls" {
   source            = "./modules/tls-self-signed"
   consul_datacenter = var.aws_region
   environment_name  = module.consul.env
-  dns_names         = [module.consul.dns_name,"server.${var.aws_region}.consul", "localhost"]
+  dns_names         = [module.consul.dns_name, "server.${var.aws_region}.consul", "localhost"]
 }

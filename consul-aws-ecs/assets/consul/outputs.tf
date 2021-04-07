@@ -34,7 +34,7 @@ output "gossip_key" {
 }
 
 output "ec2_ip" {
-    value = "ssh ubuntu@${aws_instance.ec2-vault-svcs.public_ip}"
+  value = "ssh ubuntu@${aws_instance.ec2-vault-svcs.public_ip}"
 }
 
 output "vault_url" {

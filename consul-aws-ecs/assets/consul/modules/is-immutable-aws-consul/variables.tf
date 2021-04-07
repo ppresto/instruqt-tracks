@@ -144,10 +144,12 @@ variable "consul_tls_config" {
 }
 
 variable "enable_gossip_encryption" {
+  type        = bool
   description  = "Encrypt all gossip traffic with secret token"
   default      = false
 }
 variable "enable_acl_system" {
+  type        = bool
   description  = "Enable ACL system"
   default      = false
 }
@@ -156,6 +158,7 @@ variable "acl_system_default_policy" {
   default      = "allow"
 }
 variable "enable_tls" {
+  type        = bool
   description  = "Enable ACL system"
   default      = false
 }
