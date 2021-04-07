@@ -6,5 +6,5 @@ consul_nodes             = 3
 consul_cluster_version   = "0.0.1"
 ami_release              = "0.0.1"
 enable_tls               = false
-enable_acl_system        = false
+enable_acl_system        = true
 enable_gossip_encryption = false

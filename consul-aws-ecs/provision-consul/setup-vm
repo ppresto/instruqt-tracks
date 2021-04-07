@@ -71,6 +71,7 @@ cd /tmp && {
     rm -rf "vault.zip"
   }
 
+
 mkdir -p /root/aws
 set-workdir /root/aws
 cd /root/aws
@@ -84,14 +85,6 @@ cp -r instruqt-tracks/consul-aws-ecs/assets/ecs .
 cp -r instruqt-tracks/consul-aws-ecs/assets/consul-ecs-agent .
 cp -r instruqt-tracks/consul-aws-ecs/assets/vault .
 rm -rf instruqt-tracks
-
-##################
-# testing - Remove this section...
-#mv /root/aws/consul/main.tf.acl /root/aws/consul/main.tf
-#mv /root/aws/consul/ec2.tf.encrypt_gossip /root/aws/consul/ec2.tf
-#mv /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl.acl /root/aws/consul/modules/is-immutable-aws-consul/scripts/install_hashitools_consul.sh.tpl
-##################
-
 
 # create image
 cd /root/aws/packer/consul
@@ -132,12 +125,99 @@ systemctl enable code-server
 systemctl start code-server
 
 # Wait for AMI to be available
-#until aws ec2 describe-images --owners self --query 'Images[*].[ImageId]' --output text; do
 until aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --output text | grep is-immutable-consul; do
     echo "Waiting for AWS AMI to be available"
     sleep 1
 done
 
+#provision consul
+cd /root/aws/consul
+echo "Provision Consul ..."
+/usr/local/bin/terraform init
+/usr/local/bin/terraform apply -auto-approve
+
+if [[ $(terraform output dns_name| grep "amazonaws.com") ]]; then
+    until curl -s -m 5 $(terraform output dns_name); do
+        echo "Waiting for consul URL to be available..."
+        sleep 5
+    done
+fi
+
+#Initialize Vault
+vault_lb=$(terraform output -state /root/aws/consul/terraform.tfstate vault_url)
+export VAULT_ADDR=http://${vault_lb}
+master_token=$(terraform output -state /root/aws/consul/terraform.tfstate master_token)
+agent_server_token=$(terraform output -state /root/aws/consul/terraform.tfstate agent_server_token)
+gossip_key=$(terraform output -state /root/aws/consul/terraform.tfstate gossip_key)
+snapshot_token=$(terraform output -state /root/aws/consul/terraform.tfstate snapshot_token)
+
+vault login root
+vault kv put secret/consul master_token=${master_token} agent_server_token=${agent_server_token} snapshot_token=${snapshot_token} gossip_key=${gossip_key}
+
+vault auth enable userpass
+vault write auth/userpass/users/operations password=Password1 policies=ops token_ttl=8h
+vault secrets enable consul
+
+echo 'path "secret/*" {
+  capabilities = ["list"]
+}
+path "secret/data/consul" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+path "consul/*"
+{
+  capabilities = ["create", "read", "update", "delete"]
+}' | vault policy write ops -
+
+unset VAULT_TOKEN
+
+vault login -method=userpass username=operations password=Password1
+
+export CONSUL_HTTP_TOKEN=$(vault kv get -field=master_token secret/consul)
+vault_consul_mgmt_token=$(consul acl token create -policy-name=global-management -description "vault mgmt" | grep SecretID | cut -d ":" -f2 | xargs)
+vault write consul/config/access address="${CONSUL_HTTP_ADDR}" token=${vault_consul_mgmt_token}
+
+
+consul acl policy create -name "ops" -description "admin policy for ops" -rules 'acl = "write" operator = "write" namespace_prefix "" {acl = "write"}'
+vault write consul/roles/ops policies=ops ttl=1h
+
+# Get dynamically generated "ops" consul token from Vault. This policy allows for ACL creation
+export CONSUL_HTTP_TOKEN=$(vault read -field token consul/creds/ops)
+
+# Setup Anonymous Policy
+echo '
+    node_prefix "" {
+      policy = "read"
+    }
+    session_prefix "" {
+      policy = "read"
+    }
+    agent_prefix "" {
+      policy = "read"
+    }
+    query_prefix "" {
+      policy = "read"
+    }
+    operator = "read"
+    namespace_prefix "" {
+      acl = "read"
+      intention = "read"
+      service_prefix "" {
+        policy = "read"
+      }
+      node_prefix "" {
+        policy = "read"
+      }
+    }' |  consul acl policy create -name anonymous -rules -
+    consul acl token update -id anonymous -policy-name anonymous
+
+# Set Env
+echo "Setup profile"
+cat <<PROFILE | sudo tee /etc/profile.d/consul.sh
+export CONSUL_HTTP_ADDR=$(terraform output -state /root/aws/consul/terraform.tfstate dns_name)
+export CONSUL_HTTP_TOKEN=$(terraform output -state /root/aws/consul/terraform.tfstate master_token)
+export VAULT_ADDR=http://${vault_lb}
+PROFILE
 #aws ec2 describe-images --owners self
 #aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --output text
 

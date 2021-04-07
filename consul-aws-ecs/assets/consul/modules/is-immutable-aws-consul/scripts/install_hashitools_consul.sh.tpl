@@ -79,11 +79,16 @@ ports {
 EOF
 %{ endif }
 
-%{ if enable_acl_system }
-cat << EOF > /etc/consul.d/acl.hcl
+%{ if ! enable_acl_system }
+  mkdir -p /etc/consul.d/tmp
+  acl_config_file=/etc/consul.d/tmp/acl.hcl
+%{ else } 
+  acl_config_file=/etc/consul.d/acl.hcl
+%{ endif }
+cat << EOF > $${acl_config_file}
 acl {
   enabled        = true
-  default_policy = /""${acl_system_default_policy}"/"
+  default_policy = "${acl_system_default_policy}"
   enable_token_persistence = true
   tokens {
     master = "${master_token}"
@@ -91,7 +96,6 @@ acl {
   }
 }
 EOF
-%{ endif }
 
 %{ if enable_connect }
 cat << EOF > /etc/consul.d/connect.hcl

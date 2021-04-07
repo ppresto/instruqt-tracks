@@ -17,4 +17,4 @@ enable_tls = true
 enable_acl_system = true
 enable_gossip_encryption = true
 # set default policy from "allow" to "deny" after all ACL policies and tokens are created
-acl_system_default_policy = "allow"
+acl_system_default_policy = "deny"
