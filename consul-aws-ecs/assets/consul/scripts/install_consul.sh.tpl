@@ -72,6 +72,19 @@ ui                  = true
 retry_join          = ["provider=aws tag_key=Environment-Name tag_value=${environment_name}"]
 EOF
 
+%{ if agent_server_token != "" }
+cat << EOF > /etc/consul.d/acl.hcl
+acl = {
+  enabled = true
+  default_policy = "allow"
+  enable_token_persistence = true
+  tokens = {
+    agent = "${agent_server_token}"
+  }
+}
+EOF
+%{ endif }
+
 %{ if gossip_key != "" }
 cat << EOF > /etc/consul.d/encrypt_gossip.hcl
 encrypt = "${gossip_key}"
@@ -82,7 +95,6 @@ EOF
 echo "${consul_ca_cert}" > /opt/consul/tls/ca-cert.pem
 
 cat << EOF > /etc/consul.d/tls.hcl
-#verify_incoming_rpc   = true
 verify_incoming        = false
 verify_outgoing        = true
 verify_server_hostname = true
@@ -90,9 +102,9 @@ ca_file                = "/opt/consul/tls/ca-cert.pem"
 auto_encrypt {
   tls = true
 }
-#ports {
-#  https = 8501
-#}
+ports {
+  https = 8501
+}
 EOF
 %{ endif }
 
@@ -144,7 +156,7 @@ systemctl enable consul
 
 echo "Setup Consul profile"
 cat <<PROFILE | sudo tee /etc/profile.d/consul.sh
-export CONSUL_ADDR=${consul_url}
+export CONSUL_HTTP_ADDR=${consul_url}
 export CONSUL_HTTP_TOKEN=${master_token}
 export VAULT_HTTP_ADDR=${vault_url}
 export VAULT_TOKEN="root"

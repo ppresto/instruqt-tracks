@@ -114,6 +114,7 @@ locals {
     consul_ca_cert         = module.consul_tls.consul_tls_config.ca_cert
     gossip_key             = module.consul.gossip_key
     master_token           = module.consul.master_token
+    agent_server_token     = module.consul.agent_server_token
     consul_url            = module.consul.dns_name
     vault_url             = aws_lb.vault.dns_name
   }
