@@ -132,12 +132,18 @@ echo "Provision Consul ..."
 /usr/local/bin/terraform init
 /usr/local/bin/terraform apply -auto-approve > tf.out
 
-if [[ $(terraform output dns_name| grep "amazonaws.com") ]]; then
-    until curl -s -m 5 $(terraform output dns_name); do
-        echo "Waiting for consul URL to be available..."
-        sleep 5
-    done
-fi
+#if [[ $(terraform output dns_name| grep "amazonaws.com") ]]; then
+#    until curl -s -m 5 $(terraform output dns_name); do
+#        echo "Waiting for consul URL to be available..."
+#        sleep 5
+#    done
+#fi
+
+NEXT_WAIT_TIME=0
+until [ $NEXT_WAIT_TIME -eq 10 ] || curl -s -m 5 $(terraform output dns_name); do
+    echo "Waiting $((NEXT_WAIT_TIME+1)) sec for $(terraform output dns_name)"
+    sleep $(( NEXT_WAIT_TIME++ ))
+done
 
 #Initialize Vault
 vault_lb=$(terraform output -state /root/aws/consul/terraform.tfstate vault_url)

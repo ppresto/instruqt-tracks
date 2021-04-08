@@ -85,6 +85,7 @@ EOF
 %{ else } 
   acl_config_file=/etc/consul.d/acl.hcl
 %{ endif }
+
 cat << EOF > $${acl_config_file}
 acl {
   enabled        = true
@@ -170,7 +171,7 @@ else
 fi
 EOF
 
-chmod 700 /tmp/bootstrap_tokens.sh
+chmod 755 /tmp/bootstrap_tokens.sh
 
 %{ if enable_snapshots }
 cat << EOF > /etc/consul-snapshot.d/consul-snapshot.json
@@ -248,7 +249,9 @@ until [[ $LEADER -eq 1 ]]; do
     sleep 2
 done
 
-%{ if enable_acl_system }/tmp/bootstrap_tokens.sh%{ endif }
+%{ if enable_acl_system }
+/tmp/bootstrap_tokens.sh
+%{ endif }
 
 echo "$INSTANCE_ID determined all nodes to be healthy and ready to go <3"
 
