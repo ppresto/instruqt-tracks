@@ -183,7 +183,7 @@ resource "aws_lb_target_group" "consul_http" {
     protocol = "HTTP"
   }
   tags  = {
-    Environment-Name = "random_id.environment_name.hex-consul"
+    Environment-Name = "${random_id.environment_name.hex}-consul"
   }
 }
 
@@ -203,6 +203,6 @@ resource "aws_lb_target_group" "consul_https" {
     protocol = "HTTPS"
   }
   tags  = {
-    Environment-Name = "random_id.environment_name.hex-consul"
+    Environment-Name = "${random_id.environment_name.hex}-consul"
   }
 }
