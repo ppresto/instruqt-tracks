@@ -3,7 +3,7 @@ sleep 30
 
 set-workdir /root/aws/consul
 
-#inital vault
+#Initialize Vault
 vault_lb=$(terraform output -state /root/aws/consul/terraform.tfstate vault_url)
 export VAULT_ADDR=http://${vault_lb}
 master_token=$(terraform output -state /root/aws/consul/terraform.tfstate master_token)
@@ -16,8 +16,6 @@ vault kv put secret/consul master_token=${master_token} agent_server_token=${age
 
 vault auth enable userpass
 vault write auth/userpass/users/operations password=Password1 policies=ops token_ttl=8h
-vault write auth/userpass/users/backend password=Password1 policies=backend token_ttl=30m
-vault write auth/userpass/users/frontend password=Password1 policies=frontend token_ttl=30m
 vault secrets enable consul
 
 echo 'path "secret/*" {
@@ -31,16 +29,6 @@ path "consul/*"
   capabilities = ["create", "read", "update", "delete"]
 }' | vault policy write ops -
 
-echo 'path "consul/creds/backend-developer"
-{
-  capabilities = ["read"]
-}' | vault policy write backend -
-
-echo 'path "consul/creds/frontend-developer"
-{
-  capabilities = ["read"]
-}' | vault policy write frontend -
-
 unset VAULT_TOKEN
 
 vault login -method=userpass username=operations password=Password1
@@ -53,7 +41,7 @@ vault write consul/config/access address="${CONSUL_HTTP_ADDR}" token=${vault_con
 consul acl policy create -name "ops" -description "admin policy for ops" -rules 'acl = "write" operator = "write" namespace_prefix "" {acl = "write"}'
 vault write consul/roles/ops policies=ops ttl=1h
 
-# Get dynamically generated "ops" consul token from Vault
+# Get dynamically generated "ops" consul token from Vault. This policy allows for ACL creation
 export CONSUL_HTTP_TOKEN=$(vault read -field token consul/creds/ops)
 
 # Setup Anonymous Policy
@@ -83,19 +71,19 @@ echo '
     }' |  consul acl policy create -name anonymous -rules -
     consul acl token update -id anonymous -policy-name anonymous
 
-mkdir -p /root/aws/policies
-cat << EOF > /root/aws/policies/svc-policy.hcl
-service_prefix "" {
-  policy = "write"
-}
-EOF
+
+echo '
+  service_prefix "" {
+    policy = "write"
+  }' | consul acl policy create -name "svc-policy" -description "Write policy for any service" -rules -
+
+vault kv patch secret/consul svc_token=$(consul acl token create -description 'generic service write' -policy-name 'svc-policy' -format=json | jq -r .SecretID)
+
 
 
 # Set Consul Env
 echo "Setup Consul profile"
-cat <<PROFILE | sudo tee /etc/profile.d/consul.sh
-export CONSUL_HTTP_ADDR=$(terraform output -state /root/aws/consul/terraform.tfstate dns_name)
-export CONSUL_HTTP_TOKEN=$(terraform output -state /root/aws/consul/terraform.tfstate master_token)
+cat <<PROFILE | sudo tee /etc/profile.d/vault.sh
 export VAULT_ADDR=http://${vault_lb}
 PROFILE
 

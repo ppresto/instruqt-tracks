@@ -1,7 +1,5 @@
 #!/bin/bash
 
-consul acl policy create -name "svc-policy" -description "vault" -rules @/root/aws/policies/svc-policy.hcl
-vault kv patch secret/consul svc_token=$(consul acl token create -description 'generic service' -policy-name 'svc-policy' -format=json | jq -r .SecretID)
 vault kv get -field="svc_token" secret/consul
 
 exit 0

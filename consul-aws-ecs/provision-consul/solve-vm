@@ -2,10 +2,35 @@
 
 
 sleep 10
+
+#provision consul
 cd /root/aws/consul
+echo "Provision Consul ..."
+/usr/local/bin/terraform init
+/usr/local/bin/terraform apply -auto-approve > tf.out
+
+#if [[ $(terraform output dns_name| grep "amazonaws.com") ]]; then
+#    until curl -s -m 5 $(terraform output dns_name); do
+#        echo "Waiting for consul URL to be available..."
+#        sleep 5
+#    done
+#fi
+
+NEXT_WAIT_TIME=0
+until [ $NEXT_WAIT_TIME -eq 10 ] || curl -s -m 5 $(terraform output dns_name); do
+    echo "Waiting $((NEXT_WAIT_TIME+1)) sec for $(terraform output dns_name)"
+    sleep $(( NEXT_WAIT_TIME++ ))
+done
+
+
+# Set Env
+echo "Setup profile"
+cat <<PROFILE | sudo tee /etc/profile.d/consul.sh
+export CONSUL_HTTP_ADDR=$(terraform output -state /root/aws/consul/terraform.tfstate dns_name)
+export CONSUL_HTTP_TOKEN=$(terraform output -state /root/aws/consul/terraform.tfstate master_token)
+PROFILE
+
 terraform output >> tf.out
 env >> tf.out
-
-vault kv get -field="svc_token" secret/consul
 
 exit 0
