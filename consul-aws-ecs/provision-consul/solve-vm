@@ -15,4 +15,6 @@ if [[ $(terraform output dns_name| grep "amazonaws.com") ]]; then
     done
 fi
 
+vault kv get -field="svc_token" secret/consul
+
 exit 0

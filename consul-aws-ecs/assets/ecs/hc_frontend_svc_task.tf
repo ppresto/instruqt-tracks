@@ -61,6 +61,10 @@ resource "aws_ecs_task_definition" "svc_hc_frontend" {
           {
               "name": "CONSUL_SERVICE_KV_PATH",
               "value": "service/frontend/service.json"
+          },
+          {
+              "name": "VAULT_ADDR",
+              "value": "${data.terraform_remote_state.consul.outputs.env}"
           }
       ]
     }

@@ -95,7 +95,7 @@ cd /root/aws/packer/consul
 cd /root/aws/vpc
 echo "Provision VPC ..."
 /usr/local/bin/terraform init
-/usr/local/bin/terraform apply -auto-approve
+/usr/local/bin/terraform apply -auto-approve > tf.out
 
 # Start up Visual Studio Code server
 # Create VSC startup script
@@ -120,10 +120,6 @@ EOF
 systemctl import-environment AWS_ACCESS_KEY_ID
 systemctl import-environment AWS_SECRET_ACCESS_KEY
 
-# Start VSC
-systemctl enable code-server
-systemctl start code-server
-
 # Wait for AMI to be available
 until aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --output text | grep is-immutable-consul; do
     echo "Waiting for AWS AMI to be available"
@@ -134,7 +130,7 @@ done
 cd /root/aws/consul
 echo "Provision Consul ..."
 /usr/local/bin/terraform init
-/usr/local/bin/terraform apply -auto-approve
+/usr/local/bin/terraform apply -auto-approve > tf.out
 
 if [[ $(terraform output dns_name| grep "amazonaws.com") ]]; then
     until curl -s -m 5 $(terraform output dns_name); do
@@ -211,6 +207,14 @@ echo '
     }' |  consul acl policy create -name anonymous -rules -
     consul acl token update -id anonymous -policy-name anonymous
 
+
+echo '
+  service_prefix "" {
+    policy = "write"
+  }' | consul acl policy create -name "svc-policy" -description "Write policy for any service" -rules -
+
+vault kv patch secret/consul svc_token=$(consul acl token create -description 'generic service write' -policy-name 'svc-policy' -format=json | jq -r .SecretID)
+
 # Set Env
 echo "Setup profile"
 cat <<PROFILE | sudo tee /etc/profile.d/consul.sh
@@ -220,5 +224,9 @@ export VAULT_ADDR=http://${vault_lb}
 PROFILE
 #aws ec2 describe-images --owners self
 #aws ec2 describe-images --region ${AWS_REGION} --filters "Name=tag:Owner,Values=ppresto@hashicorp.com" --output text
+
+# Start VS Code
+systemctl enable code-server
+systemctl start code-server
 
 exit 0

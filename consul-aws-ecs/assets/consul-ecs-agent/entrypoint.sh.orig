@@ -1,13 +1,8 @@
 #!/bin/bash
 
-set_environment_variables()
+check_required_environment_variables()
 {
   export EC2_HOST_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-
-  if [ -z "$CONSUL_DATACENTER" ]; then
-    echo "CONSUL_DATACENTER will default to dc1."
-    CONSUL_DATACENTER="dc1"
-  fi
 
   if [ -z "$CONSUL_HTTP_ADDR" ]; then
     echo "CONSUL_HTTP_ADDR will default to EC2 Host IP."
@@ -15,66 +10,24 @@ set_environment_variables()
     export CONSUL_HTTP_ADDR=http://${EC2_HOST_IP}:8500
     export CONSUL_GRPC_ADDR=${EC2_HOST_IP}:8502
   fi
+  
+  if [ -z "$CONSUL_CACERT" ]; then
+      echo "CONSUL_CACERT will default to /consul/tls.crt."
+      export CONSUL_CACERT=/consul/tls.crt
+  fi
 
   if [ -z "$CONSUL_RETRY_JOIN" ]; then
       CONSUL_RETRY_JOIN=${CONSUL_HTTP_ADDR}
   fi
 }
 
-get_server_certificate()
-{
-  echo "Retrieving server certificate and writing it to ${CONSUL_CACERT}."
-  curl -s -k -H "X-Consul-Token:${CONSUL_HTTP_TOKEN}" ${CONSUL_HTTP_ADDR}/v1/connect/ca/roots?pem=true > ${CONSUL_CACERT}
-}
-
-set_client_configuration_secure()
-{
-  if [ -z "$CONSUL_CA_PEM" ]; then
-    echo "set CONSUL_CA_PEM to base64 encoded contents of server ca.pem file."
-    exit 1
-  else
-    echo "Creating CA at /consul/ca.pem."
-    echo $CONSUL_CA_PEM > /consul/ca.pem
-  fi
-
-  if [ -z "$CONSUL_GOSSIP_ENCRYPT" ]; then
-    echo "set CONSUL_GOSSIP_ENCRYPT to gossip encryption key."
-    exit 1
-  fi
-  if [ -z "$AGENT_SERVER_TOKEN" ]; then
-    echo "set AGENT_SERVER_TOKEN to agent token with policy to register service."
-    exit 1
-  fi
-
-  CLIENT_CONFIG_FILE="/consul/config/client.json"
-  EC2_HOST_ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-  RECURSERS="10.0.0.2"
-  TEMP="REPLACE"
-  echo "Using EC2 host address ${EC2_HOST_ADDRESS}."
-
-  jq '.acl.tokens.agent = "'${AGENT_SERVER_TOKEN}'" | 
-      .datacenter = "'${CONSUL_DATACENTER}'" | 
-      .encrypt = "'${CONSUL_GOSSIP_ENCRYPT}'" | 
-      .advertise_addr = "'${EC2_HOST_ADDRESS}'" | 
-      .retry_join = ["'${TEMP}'"] |
-      .recursers = "'${RECURSERS}'" |
-      .auto_encrypt.ip_san = ["'${EC2_HOST_ADDRESS}'"]' ./sec_client_config.json > ${CLIENT_CONFIG_FILE}
-
-  #jq doesn't handle spaces well.  using sed here.
-  sed -i "s/REPLACE/${CONSUL_RETRY_JOIN}/" ${CLIENT_CONFIG_FILE}
-
-  trap "consul leave" SIGINT SIGTERM EXIT
-
-  consul agent -config-dir=/consul/config &
-
-  # Block using tail so the trap will fire
-  tail -f /dev/null &
-  PID=$!
-  wait $PID
-}
-
 set_client_configuration()
 {
+  if [ -z "$CONSUL_DATACENTER" ]; then
+    echo "CONSUL_DATACENTER will default to dc1."
+    CONSUL_DATACENTER="dc1"
+  fi
+
   CLIENT_CONFIG_FILE="/consul/config/client.json"
   EC2_HOST_ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
   RECURSERS="10.0.0.2"
@@ -245,12 +198,7 @@ write_consul_task_metadata()
 ### Main
 #
 
-set_environment_variables
-
-if [ ! -z "$CONSUL_CLIENT_SEC" ]; then
-  echo "Starting Consul client."
-  set_client_configuration_secure
-fi
+check_required_environment_variables
 
 if [ ! -z "$CONSUL_CLIENT" ]; then
   echo "Starting Consul client."

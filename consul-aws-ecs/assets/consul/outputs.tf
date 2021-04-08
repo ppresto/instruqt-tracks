@@ -9,9 +9,10 @@ output "dns_name" {
 output "consul_sg" {
   value = module.consul.consul_sg
 }
-#output "ca" {
-#  value = module.consul_tls.consul_tls_config.ca_cert
-#}
+
+output "ca" {
+  value = module.consul_tls.consul_tls_config.ca_cert
+}
 
 output "master_token" {
   value     = module.consul.master_token

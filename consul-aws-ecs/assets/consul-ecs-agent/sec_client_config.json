@@ -2,7 +2,7 @@
   "acl": {
     "enabled": true,
     "down_policy": "async-cache",
-    "default_policy": "deny",
+    "default_policy": "allow",
     "tokens": {
       "agent": ""
     }
@@ -26,6 +26,9 @@
   "retry_join": [
     ""
   ],
+  "recursors" : [
+    ""
+  ],
   "auto_encrypt": {
     "tls": true,
     "ip_san": [
@@ -36,7 +39,7 @@
   "ca_file": "/consul/ca.pem",
   "ports": {
     "https": 8501,
-    "http": -1,
+    "dns": 53,
     "grpc": 8502
   },
   "domain": "consul"

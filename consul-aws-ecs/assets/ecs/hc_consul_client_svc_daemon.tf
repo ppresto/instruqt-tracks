@@ -70,12 +70,28 @@ resource "aws_ecs_task_definition" "consul-client" {
           "value": "us-west-2"
         },
         {
-          "name": "CONSUL_CLIENT",
+          "name": "CONSUL_CLIENT_SEC",
           "value": "true"
         },
         {
           "name": "CONSUL_RETRY_JOIN",
           "value": "provider=aws tag_key=Environment-Name tag_value=${data.terraform_remote_state.consul.outputs.env}-consul"
+        },
+        {
+          "name": "VAULT_ADDR",
+          "value": "http://${data.terraform_remote_state.consul.outputs.vault_url}"
+        },
+        {
+          "name": "CONSUL_CA_PEM",
+          "value": "${data.terraform_remote_state.consul.outputs.ca}"
+        },
+        {
+          "name": "CONSUL_GOSSIP_ENCRYPT",
+          "value": "${data.terraform_remote_state.consul.outputs.gossip_key}"
+        },
+        {
+          "name": "AGENT_SERVER_TOKEN",
+          "value": "${data.terraform_remote_state.consul.outputs.agent_server_token}"
         }
       ]
     }
