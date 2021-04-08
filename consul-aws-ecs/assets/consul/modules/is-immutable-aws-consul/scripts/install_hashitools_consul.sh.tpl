@@ -116,11 +116,10 @@ EOF
 %{ endif }
 
 cat << EOF > /tmp/bootstrap_tokens.sh
-#!/bin/bash
+#!/bin/bash -e
 export CONSUL_HTTP_TOKEN=${master_token}
 echo "Creating Consul ACL policies......"
 if ! consul kv get acl_bootstrap 2>/dev/null; then
-  consul kv put  acl_bootstrap 1
 
   echo '
   node_prefix "" {
@@ -169,6 +168,8 @@ if ! consul kv get acl_bootstrap 2>/dev/null; then
   consul acl token create -description "consul agent server token" -policy-name consul-agent-server -secret "${agent_server_token}" 1>/dev/null
   consul acl token create -description "consul snapshot agent" -policy-name snapshot_agent -secret "${snapshot_token}" 1>/dev/null
   consul acl token update -id anonymous -policy-name anonymous 1>/dev/null
+
+  consul kv put  acl_bootstrap 1
 else
   echo "Bootstrap already completed"
 fi
@@ -214,6 +215,12 @@ done
 
 # Setup ACL Policies (note: required to read NodeMeta data below)
 %{ if enable_acl_system }
+NEXT_WAIT_TIME=0
+until [ $NEXT_WAIT_TIME -eq 10 ] || curl -s http://127.0.0.1:8500/v1/agent/self | jq -r '.Stats.consul.leader_addr'|grep "10.0"; do
+    echo "Waiting $((NEXT_WAIT_TIME+1)) sec for $(terraform output dns_name)"
+    sleep $(( NEXT_WAIT_TIME++ ))
+done
+sleep 30
 /tmp/bootstrap_tokens.sh
 %{ endif }
 
