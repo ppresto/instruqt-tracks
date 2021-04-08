@@ -59,6 +59,7 @@ node_meta = {
     consul_cluster_version = "${consul_cluster_version}"
 }
 EOF
+
 %{ if enable_tls }
 echo "${consul_ca_cert}" > /opt/consul/tls/ca-cert.pem
 echo "${consul_cert}" > /opt/consul/tls/server-cert.pem
@@ -78,7 +79,6 @@ auto_encrypt {
 ports {
   https = 8501
 }
-
 EOF
 %{ endif }
 
@@ -212,6 +212,11 @@ while true; do
     sleep 5
 done
 
+# Setup ACL Policies (note: required to read NodeMeta data below)
+%{ if enable_acl_system }
+/tmp/bootstrap_tokens.sh
+%{ endif }
+
 # Wait until all new node versions are online
 until [[ $TOTAL_NEW -ge ${total_nodes} ]]; do
     TOTAL_NEW=`curl -s http://127.0.0.1:8500/v1/catalog/service/consul | jq -er 'map(select(.NodeMeta.consul_cluster_version == "${consul_cluster_version}")) | length'`
@@ -251,10 +256,6 @@ until [[ $LEADER -eq 1 ]]; do
     curl -s http://127.0.0.1:8500/v1/catalog/service/consul | jq -er ".[] | select(.ID == \"$LEADER_ID\" and .NodeMeta.consul_cluster_version == \"${consul_cluster_version}\")" && let "LEADER+=1" && echo "New Leader: $LEADER_ID"
     sleep 2
 done
-
-%{ if enable_acl_system }
-/tmp/bootstrap_tokens.sh
-%{ endif }
 
 echo "$INSTANCE_ID determined all nodes to be healthy and ready to go <3"
 
