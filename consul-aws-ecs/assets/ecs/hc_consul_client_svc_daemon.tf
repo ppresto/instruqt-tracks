@@ -10,7 +10,7 @@ resource "aws_ecs_task_definition" "consul-client" {
   [
     {
       "name": "consul-client",
-      "image": "ppresto/consul-ecs:1.9.3-1.16.0",
+      "image": "ppresto/consul-ecs:1.9.3-1.16.0-6",
       "essential": true,
       "logConfiguration": {
         "logDriver": "awslogs",
