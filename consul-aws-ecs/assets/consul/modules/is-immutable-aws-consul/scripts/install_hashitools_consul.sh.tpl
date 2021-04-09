@@ -218,6 +218,7 @@ until [ $NEXT_WAIT_TIME -eq 10 ] || curl -s http://127.0.0.1:8500/v1/status/lead
     echo "Waiting $((NEXT_WAIT_TIME+1)) sec for $(curl -s http://127.0.0.1:8500/v1/status/leader)"
     sleep $(( NEXT_WAIT_TIME++ ))
 done
+sleep 30
 /tmp/bootstrap_tokens.sh
 %{ endif }
 
