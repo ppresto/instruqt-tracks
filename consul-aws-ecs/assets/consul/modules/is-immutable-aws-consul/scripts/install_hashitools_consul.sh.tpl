@@ -214,7 +214,7 @@ done
 # Setup ACL Policies (note: required to read NodeMeta data below)
 %{ if enable_acl_system }
 NEXT_WAIT_TIME=0
-until [ $NEXT_WAIT_TIME -eq 10 ] || curl -s http://127.0.0.1:8500/v1/status/leader'; do
+until [ $NEXT_WAIT_TIME -eq 10 ] || curl -s http://127.0.0.1:8500/v1/status/leader; do
     echo "Waiting $((NEXT_WAIT_TIME+1)) sec for $(curl -s http://127.0.0.1:8500/v1/status/leader)"
     sleep $(( NEXT_WAIT_TIME++ ))
 done
