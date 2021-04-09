@@ -1,7 +1,5 @@
-#!/bin/bash -xe
+#!/usr/bin/env bash
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-
-###!/usr/bin/env bash
 
 echo "Starting deployment from AMI: ${ami}"
 INSTANCE_ID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`
@@ -116,66 +114,62 @@ EOF
 %{ endif }
 
 cat << EOF > /tmp/bootstrap_tokens.sh
-#!/bin/bash -e
+#!/bin/bash
 export CONSUL_HTTP_TOKEN=${master_token}
-if [[ curl -s http://127.0.0.1:8500/v1/agent/self | jq -r '.Stats.consul.leader_addr' | grep "$(hostname -i | awk '{ print $NF }')" ]]; then
-  echo "Creating Consul ACL policies......"
-  
-  if ! consul kv get acl_bootstrap 2>/dev/null; then
-    consul kv put  acl_bootstrap 1
-    echo '
-    node_prefix "" {
-      policy = "write"
-    }
-    service_prefix "" {
-      policy = "read"
-    }
-    service "consul" {
-      policy = "write"
-    }
-    agent_prefix "" {
-      policy = "write"
-    }' | consul acl policy create -name consul-agent-server -rules -
+echo "Creating Consul ACL policies......"
 
-    echo '
-    acl = "write"
-    key "consul-snapshot/lock" {
+if ! consul kv get acl_bootstrap 2>/dev/null; then
+  consul kv put  acl_bootstrap 1
+  echo '
+  node_prefix "" {
     policy = "write"
-    }
-    session_prefix "" {
+  }
+  service_prefix "" {
+    policy = "read"
+  }
+  service "consul" {
     policy = "write"
-    }
-    service "consul-snapshot" {
+  }
+  agent_prefix "" {
     policy = "write"
-    }' | consul acl policy create -name snapshot_agent -rules -
+  }' | consul acl policy create -name consul-agent-server -rules -
 
-    echo '
-    node_prefix "" {
-      policy = "read"
-    }
-    service_prefix "" {
-      policy = "read"
-    }
-    session_prefix "" {
-      policy = "read"
-    }
-    agent_prefix "" {
-      policy = "read"
-    }
-    query_prefix "" {
-      policy = "read"
-    }
-    operator = "read"' |  consul acl policy create -name anonymous -rules -
+  echo '
+  acl = "write"
+  key "consul-snapshot/lock" {
+  policy = "write"
+  }
+  session_prefix "" {
+  policy = "write"
+  }
+  service "consul-snapshot" {
+  policy = "write"
+  }' | consul acl policy create -name snapshot_agent -rules -
 
-    consul acl token create -description "consul agent server token" -policy-name consul-agent-server -secret "${agent_server_token}" 1>/dev/null
-    consul acl token create -description "consul snapshot agent" -policy-name snapshot_agent -secret "${snapshot_token}" 1>/dev/null
-    consul acl token update -id anonymous -policy-name anonymous 1>/dev/null
+  echo '
+  node_prefix "" {
+    policy = "read"
+  }
+  service_prefix "" {
+    policy = "read"
+  }
+  session_prefix "" {
+    policy = "read"
+  }
+  agent_prefix "" {
+    policy = "read"
+  }
+  query_prefix "" {
+    policy = "read"
+  }
+  operator = "read"' |  consul acl policy create -name anonymous -rules -
 
-  else
-    echo "Bootstrap already completed"
-  fi
+  consul acl token create -description "consul agent server token" -policy-name consul-agent-server -secret "${agent_server_token}" 1>/dev/null
+  consul acl token create -description "consul snapshot agent" -policy-name snapshot_agent -secret "${snapshot_token}" 1>/dev/null
+  consul acl token update -id anonymous -policy-name anonymous 1>/dev/null
+
 else
-  echo "Follower: Skipping ACL Bootstrap.  Leader: $(curl -s http://127.0.0.1:8500/v1/agent/self | jq -r '.Stats.consul.leader_addr')"
+  echo "Bootstrap already completed"
 fi
 EOF
 
@@ -220,8 +214,8 @@ done
 # Setup ACL Policies (note: required to read NodeMeta data below)
 %{ if enable_acl_system }
 NEXT_WAIT_TIME=0
-until [ $NEXT_WAIT_TIME -eq 10 ] || curl -s http://127.0.0.1:8500/v1/agent/self | jq -r '.Stats.consul.leader_addr'; do
-    echo "Waiting $((NEXT_WAIT_TIME+1)) sec for $(terraform output dns_name)"
+until [ $NEXT_WAIT_TIME -eq 10 ] || curl -s http://127.0.0.1:8500/v1/status/leader'; do
+    echo "Waiting $((NEXT_WAIT_TIME+1)) sec for $(curl -s http://127.0.0.1:8500/v1/status/leader)"
     sleep $(( NEXT_WAIT_TIME++ ))
 done
 /tmp/bootstrap_tokens.sh
