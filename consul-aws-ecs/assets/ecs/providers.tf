@@ -11,6 +11,11 @@ provider "aws" {
 provider "consul" {
   address    = data.terraform_remote_state.consul.outputs.dns_name
   datacenter = var.aws_region
+  token = data.terraform_remote_state.consul.outputs.master_token
+}
+
+provider "vault" {
+  address = "http://${data.terraform_remote_state.consul.outputs.vault_url}"
 }
 
 terraform {

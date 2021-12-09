@@ -38,8 +38,8 @@
   "leave_on_terminate": true,
   "ca_file": "/consul/ca.pem",
   "ports": {
+    "http": 8500,
     "https": 8501,
-    "dns": 53,
     "grpc": 8502
   },
   "domain": "consul"

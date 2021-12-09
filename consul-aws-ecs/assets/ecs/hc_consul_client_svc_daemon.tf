@@ -83,7 +83,7 @@ resource "aws_ecs_task_definition" "consul-client" {
         },
         {
           "name": "CONSUL_CA_PEM",
-          "value": "${data.terraform_remote_state.consul.outputs.ca}"
+          "value": "${base64encode(data.terraform_remote_state.consul.outputs.ca)}"
         },
         {
           "name": "CONSUL_GOSSIP_ENCRYPT",

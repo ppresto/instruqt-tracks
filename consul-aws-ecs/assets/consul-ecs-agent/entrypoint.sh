@@ -34,7 +34,7 @@ set_client_configuration_secure()
     exit 1
   else
     echo "Creating CA at /consul/ca.pem."
-    echo $CONSUL_CA_PEM > /consul/ca.pem
+    echo $CONSUL_CA_PEM | base64 -d > /consul/ca.pem
   fi
 
   if [ -z "$CONSUL_GOSSIP_ENCRYPT" ]; then
@@ -48,7 +48,7 @@ set_client_configuration_secure()
 
   CLIENT_CONFIG_FILE="/consul/config/client.json"
   EC2_HOST_ADDRESS=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
-  RECURSERS="10.0.0.2"
+  RECURSORS="10.0.0.2"
   TEMP="REPLACE"
   echo "Using EC2 host address ${EC2_HOST_ADDRESS}."
 
@@ -57,7 +57,7 @@ set_client_configuration_secure()
       .encrypt = "'${CONSUL_GOSSIP_ENCRYPT}'" | 
       .advertise_addr = "'${EC2_HOST_ADDRESS}'" | 
       .retry_join = ["'${TEMP}'"] |
-      .recursers = "'${RECURSERS}'" |
+      .recursors = ["'${RECURSORS}'"] |
       .auto_encrypt.ip_san = ["'${EC2_HOST_ADDRESS}'"]' ./sec_client_config.json > ${CLIENT_CONFIG_FILE}
 
   #jq doesn't handle spaces well.  using sed here.

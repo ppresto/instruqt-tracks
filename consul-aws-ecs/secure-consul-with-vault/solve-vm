@@ -2,4 +2,12 @@
 
 vault kv get -field="svc_token" secret/consul
 
+vault write consul/roles/frontend policies=frontend_policy ttl=1h
+vault write consul/roles/product-api policies=product-api_policy ttl=1h
+vault write consul/roles/pub-api policies=pub-api_policy ttl=1h
+vault write consul/roles/postgres policies=postgres_policy ttl=1h
+vault read -field token consul/creds/frontend
+vault read -field token consul/creds/product-api
+vault read -field token consul/creds/pub-api
+vault read -field token consul/creds/postgres
 exit 0
